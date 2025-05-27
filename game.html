@@ -16,23 +16,31 @@
       margin: 0 auto;
       background: #222;
     }
-    #startScreen, #fireBtn {
+    #startScreen, #fireBtn, #scoreBoard {
       position: absolute;
+      z-index: 10;
+      color: white;
+      text-align: center;
+    }
+    #startScreen {
       top: 10px;
       left: 50%;
       transform: translateX(-50%);
-      color: white;
-      text-align: center;
-      z-index: 10;
     }
     #fireBtn {
-      top: auto;
       bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
       background: red;
       padding: 10px 20px;
       border-radius: 10px;
       font-size: 20px;
       cursor: pointer;
+    }
+    #scoreBoard {
+      top: 10px;
+      left: 10px;
+      font-size: 18px;
     }
     .blood {
       position: absolute;
@@ -53,12 +61,13 @@
     <input type="text" id="playerName" placeholder="Enter your name" />
     <button onclick="startGame()">Start Game</button>
   </div>
+  <div id="scoreBoard">Score: 0</div>
   <canvas id="gameCanvas" width="480" height="640"></canvas>
   <div id="fireBtn" onclick="fireBullet()">FIRE</div>  <script>
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
     let player = { x: canvas.width / 2, name: "", gunOffset: 20 };
-    let bullets = [], enemies = [], gameRunning = false;
+    let bullets = [], enemies = [], gameRunning = false, score = 0;
     const colors = ["black", "green", "red", "white"];
 
     function startGame() {
@@ -79,11 +88,11 @@
     function drawPlayer() {
       ctx.fillStyle = "#0f0";
       ctx.fillRect(player.x - 15, canvas.height - 60, 30, 40);
-      ctx.fillStyle = "#654321"; // gun
+      ctx.fillStyle = "#654321";
       ctx.fillRect(player.x - 5, canvas.height - 70, 10, 30);
       ctx.fillStyle = "#fff";
       ctx.fillText(player.name, player.x - 20, canvas.height - 75);
-      ctx.fillStyle = "#555"; // cap
+      ctx.fillStyle = "#555";
       ctx.fillRect(player.x - 10, canvas.height - 65, 20, 5);
     }
 
@@ -109,7 +118,6 @@
       bullets = bullets.filter((b) => b.y > 0);
       enemies.forEach((e) => (e.y += e.speed));
 
-      // Collision
       bullets.forEach((b, bi) => {
         enemies.forEach((e, ei) => {
           const dist = Math.hypot(b.x - e.x, b.y - e.y);
@@ -117,6 +125,8 @@
             enemies.splice(ei, 1);
             bullets.splice(bi, 1);
             createBlood(e.x, e.y);
+            score++;
+            document.getElementById("scoreBoard").innerText = `Score: ${score}`;
           }
         });
       });
@@ -139,7 +149,11 @@
       setTimeout(() => blood.remove(), 500);
     }
 
-    // Controls
+    canvas.addEventListener("touchmove", (e) => {
+      const rect = canvas.getBoundingClientRect();
+      player.x = e.touches[0].clientX - rect.left;
+    });
+
     window.addEventListener("keydown", (e) => {
       if (e.key === "ArrowLeft") player.x -= 20;
       else if (e.key === "ArrowRight") player.x += 20;
