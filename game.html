@@ -1,110 +1,149 @@
-<!DOCTYPE html>
-<html>
+<!DOCTYPE html><html lang="en">
 <head>
-    <style>
-        body {
-            background: #222;
-            margin: 0;
-            overflow: hidden;
-        }
-        canvas {
-            display: block;
-            margin: auto;
-            background: #111;
-            border: 2px solid #555;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shooter Game</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #111;
+      overflow: hidden;
+      font-family: sans-serif;
+    }
+    canvas {
+      display: block;
+      margin: 0 auto;
+      background: #222;
+    }
+    #startScreen, #fireBtn {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: white;
+      text-align: center;
+      z-index: 10;
+    }
+    #fireBtn {
+      top: auto;
+      bottom: 20px;
+      background: red;
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-size: 20px;
+      cursor: pointer;
+    }
+    .blood {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: red;
+      border-radius: 50%;
+      animation: splash 0.5s ease-out forwards;
+    }
+    @keyframes splash {
+      from { transform: scale(0); opacity: 1; }
+      to { transform: scale(2); opacity: 0; }
+    }
+  </style>
 </head>
 <body>
-<canvas id="gameCanvas" width="600" height="400"></canvas>
-<script>
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
+  <div id="startScreen">
+    <input type="text" id="playerName" placeholder="Enter your name" />
+    <button onclick="startGame()">Start Game</button>
+  </div>
+  <canvas id="gameCanvas" width="480" height="640"></canvas>
+  <div id="fireBtn" onclick="fireBullet()">FIRE</div>  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    let player = { x: canvas.width / 2, name: "", gunOffset: 20 };
+    let bullets = [], enemies = [], gameRunning = false;
+    const colors = ["black", "green", "red", "white"];
 
-    let player = {
-        x: 280, y: 360, width: 40, height: 30, color: "green"
-    };
-
-    let bullets = [];
-    let enemies = [];
-
-    function drawPlayer() {
-        ctx.fillStyle = "green";
-        ctx.fillRect(player.x, player.y, player.width, player.height);
-        ctx.fillStyle = "brown";  // Army cap
-        ctx.fillRect(player.x + 10, player.y - 5, 20, 5);
+    function startGame() {
+      player.name = document.getElementById("playerName").value || "Soldier";
+      document.getElementById("startScreen").style.display = "none";
+      gameRunning = true;
+      requestAnimationFrame(update);
+      setInterval(() => {
+        enemies.push({
+          x: Math.random() * (canvas.width - 30) + 15,
+          y: -20,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          speed: Math.random() * 2 + 1
+        });
+      }, 1000);
     }
 
-    function drawEnemies() {
-        enemies.forEach((enemy) => {
-            ctx.fillStyle = enemy.color;
-            ctx.fillRect(enemy.x, enemy.y, 30, 30);
-        });
+    function drawPlayer() {
+      ctx.fillStyle = "#0f0";
+      ctx.fillRect(player.x - 15, canvas.height - 60, 30, 40);
+      ctx.fillStyle = "#654321"; // gun
+      ctx.fillRect(player.x - 5, canvas.height - 70, 10, 30);
+      ctx.fillStyle = "#fff";
+      ctx.fillText(player.name, player.x - 20, canvas.height - 75);
+      ctx.fillStyle = "#555"; // cap
+      ctx.fillRect(player.x - 10, canvas.height - 65, 20, 5);
     }
 
     function drawBullets() {
-        bullets.forEach((bullet) => {
-            ctx.fillStyle = "yellow";
-            ctx.fillRect(bullet.x, bullet.y, 5, 10);
-        });
+      ctx.fillStyle = "yellow";
+      bullets.forEach((b) => ctx.fillRect(b.x, b.y, 4, 10));
+    }
+
+    function drawEnemies() {
+      enemies.forEach((e) => {
+        ctx.fillStyle = e.color;
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, 15, 0, Math.PI * 2);
+        ctx.fill();
+      });
     }
 
     function update() {
-        bullets.forEach((bullet, i) => {
-            bullet.y -= 5;
-            if (bullet.y < 0) bullets.splice(i, 1);
+      if (!gameRunning) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawPlayer();
+      bullets.forEach((b) => (b.y -= 5));
+      bullets = bullets.filter((b) => b.y > 0);
+      enemies.forEach((e) => (e.y += e.speed));
+
+      // Collision
+      bullets.forEach((b, bi) => {
+        enemies.forEach((e, ei) => {
+          const dist = Math.hypot(b.x - e.x, b.y - e.y);
+          if (dist < 15) {
+            enemies.splice(ei, 1);
+            bullets.splice(bi, 1);
+            createBlood(e.x, e.y);
+          }
         });
+      });
 
-        enemies.forEach((enemy, ei) => {
-            enemy.y += 1;
-            bullets.forEach((bullet, bi) => {
-                if (
-                    bullet.x < enemy.x + 30 &&
-                    bullet.x + 5 > enemy.x &&
-                    bullet.y < enemy.y + 30 &&
-                    bullet.y + 10 > enemy.y
-                ) {
-                    enemies.splice(ei, 1);
-                    bullets.splice(bi, 1);
-                }
-            });
-        });
-
-        if (Math.random() < 0.02) {
-            const colors = ["black", "green", "red", "white"];
-            const color = colors[Math.floor(Math.random() * colors.length)];
-            enemies.push({
-                x: Math.random() * 570,
-                y: -30,
-                color: color
-            });
-        }
+      drawBullets();
+      drawEnemies();
+      requestAnimationFrame(update);
     }
 
-    function render() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        drawPlayer();
-        drawEnemies();
-        drawBullets();
+    function fireBullet() {
+      bullets.push({ x: player.x, y: canvas.height - 70 });
     }
 
-    function gameLoop() {
-        update();
-        render();
-        requestAnimationFrame(gameLoop);
+    function createBlood(x, y) {
+      const blood = document.createElement("div");
+      blood.className = "blood";
+      blood.style.left = x + "px";
+      blood.style.top = y + "px";
+      document.body.appendChild(blood);
+      setTimeout(() => blood.remove(), 500);
     }
 
-    document.addEventListener("keydown", (e) => {
-        if (e.key === "ArrowLeft" && player.x > 0) {
-            player.x -= 10;
-        } else if (e.key === "ArrowRight" && player.x < 560) {
-            player.x += 10;
-        } else if (e.key === " ") {
-            bullets.push({ x: player.x + 18, y: player.y });
-        }
+    // Controls
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft") player.x -= 20;
+      else if (e.key === "ArrowRight") player.x += 20;
+      else if (e.key === " ") fireBullet();
     });
-
-    gameLoop();
-</script>
-</body>
+  </script></body>
 </html>
