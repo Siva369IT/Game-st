@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            background: #222;
+            margin: 0;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+            margin: auto;
+            background: #111;
+            border: 2px solid #555;
+        }
+    </style>
+</head>
+<body>
+<canvas id="gameCanvas" width="600" height="400"></canvas>
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    let player = {
+        x: 280, y: 360, width: 40, height: 30, color: "green"
+    };
+
+    let bullets = [];
+    let enemies = [];
+
+    function drawPlayer() {
+        ctx.fillStyle = "green";
+        ctx.fillRect(player.x, player.y, player.width, player.height);
+        ctx.fillStyle = "brown";  // Army cap
+        ctx.fillRect(player.x + 10, player.y - 5, 20, 5);
+    }
+
+    function drawEnemies() {
+        enemies.forEach((enemy) => {
+            ctx.fillStyle = enemy.color;
+            ctx.fillRect(enemy.x, enemy.y, 30, 30);
+        });
+    }
+
+    function drawBullets() {
+        bullets.forEach((bullet) => {
+            ctx.fillStyle = "yellow";
+            ctx.fillRect(bullet.x, bullet.y, 5, 10);
+        });
+    }
+
+    function update() {
+        bullets.forEach((bullet, i) => {
+            bullet.y -= 5;
+            if (bullet.y < 0) bullets.splice(i, 1);
+        });
+
+        enemies.forEach((enemy, ei) => {
+            enemy.y += 1;
+            bullets.forEach((bullet, bi) => {
+                if (
+                    bullet.x < enemy.x + 30 &&
+                    bullet.x + 5 > enemy.x &&
+                    bullet.y < enemy.y + 30 &&
+                    bullet.y + 10 > enemy.y
+                ) {
+                    enemies.splice(ei, 1);
+                    bullets.splice(bi, 1);
+                }
+            });
+        });
+
+        if (Math.random() < 0.02) {
+            const colors = ["black", "green", "red", "white"];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            enemies.push({
+                x: Math.random() * 570,
+                y: -30,
+                color: color
+            });
+        }
+    }
+
+    function render() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawPlayer();
+        drawEnemies();
+        drawBullets();
+    }
+
+    function gameLoop() {
+        update();
+        render();
+        requestAnimationFrame(gameLoop);
+    }
+
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowLeft" && player.x > 0) {
+            player.x -= 10;
+        } else if (e.key === "ArrowRight" && player.x < 560) {
+            player.x += 10;
+        } else if (e.key === " ") {
+            bullets.push({ x: player.x + 18, y: player.y });
+        }
+    });
+
+    gameLoop();
+</script>
+</body>
+</html>
