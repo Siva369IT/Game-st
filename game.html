@@ -1,250 +1,132 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Full Space Shooter Game with Name & Difficulty & Sounds</title>
-<style>
-  body {
-    margin: 0; background: #000; color: #eee;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    user-select: none;
-    overflow: hidden;
-  }
-  #game-container {
-    position: relative;
-    width: 800px; height: 600px;
-    margin: 20px auto;
-    background: radial-gradient(ellipse at center, #00111f 0%, #000000 100%);
-    border: 3px solid #0f7;
-    border-radius: 15px;
-    overflow: hidden;
-  }
-  #ui {
-    position: absolute; top: 10px; left: 10px; width: 780px;
-    display: flex; align-items: center; gap: 20px;
-    z-index: 1000;
-    font-size: 18px;
-  }
-  #name-input, #submit-name-btn, #difficulty-select, #start-btn {
-    padding: 6px 10px;
-    font-size: 16px;
-    border-radius: 6px;
-    border: none;
-    outline: none;
-    font-weight: bold;
-    user-select:none;
-    cursor: pointer;
-  }
-  #name-input {
-    width: 180px;
-    color: #000;
-  }
-  #difficulty-select, #start-btn, #submit-name-btn {
-    background-color: #0f7;
-    color: #000;
-  }
-  #difficulty-select:disabled, #start-btn:disabled, #submit-name-btn:disabled {
-    background-color: #555;
-    cursor: not-allowed;
-  }
-  #scoreboard {
-    font-weight: bold;
-    user-select:none;
-  }
-  #hearts-container {
-    display: flex;
-    gap: 6px;
-    user-select:none;
-  }
-  .heart {
-    width: 24px; height: 24px;
-    background: url('https://i.imgur.com/PaJ4f0M.png') no-repeat center center;
-    background-size: contain;
-  }
-  #game-canvas {
-    background: transparent;
-    display: block;
-    margin: 0 auto;
-    border-radius: 15px;
-    cursor: grab;
-  }
-  #appreciation-text {
-    position: absolute;
-    top: 550px; left: 50%;
-    transform: translateX(-50%);
-    font-size: 22px;
-    font-weight: 900;
-    color: #0f7;
-    text-shadow: 0 0 10px #0f7, 0 0 20px #0f7;
-    pointer-events: none;
-    user-select:none;
-    height: 28px;
-  }
-  #game-over-screen {
-    position: absolute;
-    top: 0; left: 0;
-    width: 800px; height: 600px;
-    background: rgba(0,0,0,0.9);
-    color: #0f7;
-    font-size: 32px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    z-index: 2000;
-    border-radius: 15px;
-    user-select:none;
-  }
-  #restart-btn {
-    margin-top: 20px;
-    padding: 10px 30px;
-    font-size: 20px;
-    background-color: #0f7;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    font-weight: bold;
-    color: #000;
-    user-select:none;
-  }
-  #restart-btn:hover {
-    background-color: #0c5;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Character Generator</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to bottom, #000000, #0f0f0f);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    h1 {
+      font-size: 22px;
+      text-align: center;
+    }
+
+    .container {
+      border: 2px solid lime;
+      border-radius: 12px;
+      padding: 15px;
+      width: 95%;
+      max-width: 400px;
+      background-color: #101010;
+    }
+
+    input, button {
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      font-size: 16px;
+      margin-right: 5px;
+    }
+
+    button {
+      background-color: #00ff88;
+      color: black;
+      font-weight: bold;
+    }
+
+    canvas {
+      margin-top: 20px;
+      background-color: #222;
+      border: 1px solid lime;
+      border-radius: 10px;
+    }
+
+    @media (max-width: 480px) {
+      h1 { font-size: 18px; }
+      input, button { width: 100%; margin-top: 10px; }
+    }
+  </style>
 </head>
 <body>
-<div id="game-container">
-  <canvas id="game-canvas" width="800" height="600" tabindex="0"></canvas>
-
-  <div id="ui">
-    <input id="name-input" type="text" placeholder="Enter Your Name" maxlength="12" />
-    <button id="submit-name-btn">Submit Name</button>
-
-    <select id="difficulty-select" disabled>
-      <option value="" disabled selected>Select Difficulty</option>
-      <option value="easy">Easy</option>
-      <option value="medium">Medium</option>
-      <option value="hard">Hard</option>
-    </select>
-
-    <button id="start-btn" disabled>Start Game</button>
-
-    <div id="scoreboard">Score: 0</div>
-    <div id="hearts-container"></div>
+  <div class="container">
+    <input type="text" id="nameInput" placeholder="Enter your name" />
+    <button onclick="generateCharacter()">Submit Name</button>
+    <h1 id="welcomeText"></h1>
+    <canvas id="characterCanvas" width="250" height="300"></canvas>
   </div>
 
-  <div id="appreciation-text"></div>
-  <div id="game-over-screen" style="display:none;">
-    <div>Game Over</div>
-    <div id="final-score" style="margin-top: 10px; font-size: 24px;"></div>
-    <button id="restart-btn">Restart</button>
-  </div>
-</div>
+  <script>
+    const characterOptions = [
+      "with Army Cap & AK Gun",
+      "in Ninja Costume with Shuriken",
+      "with Cyberpunk Shades & Laser Sword",
+      "wearing Pirate Hat with Hook",
+      "in Space Suit with Jetpack",
+      "with Cowboy Hat & Revolver",
+      "as a Samurai with Katana"
+    ];
 
-<script>
-(() => {
-  // === Sound assets ===
-  const sounds = {
-    bgMusic: new Audio('https://cdn.pixabay.com/download/audio/2021/09/01/audio_8e1ee0f6c2.mp3?filename=futuristic-game-loop-118196.mp3'),
-    fireSound: new Audio('https://cdn.pixabay.com/download/audio/2021/08/04/audio_8d5b84dfd8.mp3?filename=laser-gun-6372.mp3'),
-    hitSound: new Audio('https://cdn.pixabay.com/download/audio/2022/03/04/audio_06b4158b08.mp3?filename=explosion-6836.mp3')
-  };
+    function generateCharacter() {
+      const name = document.getElementById('nameInput').value.trim();
+      const welcomeText = document.getElementById('welcomeText');
+      const canvas = document.getElementById('characterCanvas');
+      const ctx = canvas.getContext('2d');
 
-  sounds.bgMusic.loop = true;
-  sounds.bgMusic.volume = 0.15;
-  sounds.fireSound.volume = 0.3;
-  sounds.hitSound.volume = 0.5;
+      if (!name) {
+        welcomeText.textContent = "Please enter a name.";
+        return;
+      }
 
-  // Canvas setup
-  const canvas = document.getElementById('game-canvas');
-  const ctx = canvas.getContext('2d');
-  const width = canvas.width;
-  const height = canvas.height;
+      // Random character
+      const character = characterOptions[Math.floor(Math.random() * characterOptions.length)];
+      welcomeText.textContent = `Welcome, ${name} (${character})!`;
 
-  // UI Elements
-  const nameInput = document.getElementById('name-input');
-  const submitNameBtn = document.getElementById('submit-name-btn');
-  const difficultySelect = document.getElementById('difficulty-select');
-  const startBtn = document.getElementById('start-btn');
-  const scoreboard = document.getElementById('scoreboard');
-  const heartsContainer = document.getElementById('hearts-container');
-  const appreciationText = document.getElementById('appreciation-text');
-  const gameOverScreen = document.getElementById('game-over-screen');
-  const finalScoreText = document.getElementById('final-score');
-  const restartBtn = document.getElementById('restart-btn');
+      // Clear canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Game state
-  let playerName = '';
-  let difficulty = '';
-  let gameStarted = false;
-  let gameOver = false;
+      // Draw simple character
+      ctx.fillStyle = '#00ff88';
+      ctx.beginPath(); // Head
+      ctx.arc(125, 60, 30, 0, Math.PI * 2);
+      ctx.fill();
 
-  // Player object
-  let player = {
-    x: width / 2,
-    y: height - 70,
-    width: 60,
-    height: 60,
-    speed: 7,
-    lives: 3,
-    bullets: [],
-    canShoot: true,
-    shootCooldown: 300,
-    lastShootTime: 0,
-  };
+      ctx.fillStyle = '#ffffff'; // Body
+      ctx.fillRect(110, 90, 30, 80);
 
-  let enemies = [];
-  let rewards = [];
-  let score = 0;
+      ctx.strokeStyle = '#ffffff'; // Arms
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(110, 100);
+      ctx.lineTo(80, 130);
+      ctx.moveTo(140, 100);
+      ctx.lineTo(170, 130);
+      ctx.stroke();
 
-  const difficulties = {
-    easy: {
-      enemyCount: 4,
-      enemySpeed: 1.5,
-      rewardFreq: 10000,
-      playerSpeed: 7,
-      enemyBulletSpeed: 2,
-    },
-    medium: {
-      enemyCount: 6,
-      enemySpeed: 2.2,
-      rewardFreq: 7000,
-      playerSpeed: 9,
-      enemyBulletSpeed: 3,
-    },
-    hard: {
-      enemyCount: 8,
-      enemySpeed: 3,
-      rewardFreq: 5000,
-      playerSpeed: 12,
-      enemyBulletSpeed: 4,
-    },
-  };
+      ctx.beginPath(); // Legs
+      ctx.moveTo(115, 170);
+      ctx.lineTo(110, 210);
+      ctx.moveTo(135, 170);
+      ctx.lineTo(140, 210);
+      ctx.stroke();
 
-  let currentDifficultySettings = {};
+      // Gun / Sword / Shuriken icon (optional)
+      ctx.fillStyle = 'red';
+      ctx.fillRect(75, 125, 8, 25); // Weapon
 
-  const appreciationMilestones = [
-    { score: 10, text: "Nice Start!" },
-    { score: 20, text: "Good Job!" },
-    { score: 40, text: "Awesome!" },
-    { score: 60, text: "Excellent!" },
-    { score: 80, text: "Fantastic!" },
-    { score: 100, text: "Legendary!" }
-  ];
-  let nextAppreciationIndex = 0;
-
-  // Utility functions
-  function randInt(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-  }
-
-  // Drawing functions
-  function drawPlayer() {
-    ctx.fillStyle = '#0f7';
-    ctx.beginPath();
-    ctx.moveTo(player.x, player.y - player.height / 2);
-    ctx.lineTo(player.x - player.width / 2, player.y + player.height / 2);
-    ctx.lineTo(player.x + player.width / 2, player.y + player.height / 2);
-    ctx.closePath();
-    ctx
+      ctx.font = "12px Arial";
+      ctx.fillStyle = "#aaa";
+      ctx.fillText(character, 10, 290); // Caption
+    }
+  </script>
+</body>
+</html>
