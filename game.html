@@ -1,132 +1,384 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Character Generator</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(to bottom, #000000, #0f0f0f);
-      color: white;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 20px;
-    }
-
-    h1 {
-      font-size: 22px;
-      text-align: center;
-    }
-
-    .container {
-      border: 2px solid lime;
-      border-radius: 12px;
-      padding: 15px;
-      width: 95%;
-      max-width: 400px;
-      background-color: #101010;
-    }
-
-    input, button {
-      padding: 10px;
-      border-radius: 8px;
-      border: none;
-      font-size: 16px;
-      margin-right: 5px;
-    }
-
-    button {
-      background-color: #00ff88;
-      color: black;
-      font-weight: bold;
-    }
-
-    canvas {
-      margin-top: 20px;
-      background-color: #222;
-      border: 1px solid lime;
-      border-radius: 10px;
-    }
-
-    @media (max-width: 480px) {
-      h1 { font-size: 18px; }
-      input, button { width: 100%; margin-top: 10px; }
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Shooting Game</title>
+<style>
+  body, html {
+    margin: 0; padding: 0; overflow: hidden;
+    background: #111;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    color: #fff;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+  }
+  #gameContainer {
+    position: relative;
+    width: 100vw;
+    height: 90vh;
+    background: linear-gradient(180deg, #222 0%, #000 100%);
+    overflow: hidden;
+  }
+  #uiContainer {
+    position: relative;
+    height: 10vh;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background: #222;
+  }
+  #score {
+    font-size: 1.4rem;
+    font-weight: bold;
+    padding-left: 10px;
+  }
+  #lives {
+    display: flex;
+    gap: 5px;
+  }
+  .heart {
+    width: 24px;
+    height: 24px;
+    background: url('https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Heart_icon_red.svg/1024px-Heart_icon_red.svg.png') no-repeat center center / contain;
+  }
+  #appreciation {
+    position: absolute;
+    top: 40%;
+    width: 100%;
+    text-align: center;
+    font-size: 2.5rem;
+    color: #0f0;
+    font-weight: bold;
+    display: none;
+  }
+  #gameOverScreen {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.85);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.8rem;
+    display: none;
+    z-index: 1000;
+  }
+  #restartBtn {
+    margin-top: 20px;
+    padding: 10px 20px;
+    font-size: 1.3rem;
+    cursor: pointer;
+    background: #0a0;
+    border: none;
+    border-radius: 6px;
+    color: white;
+  }
+  #player {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 80px;
+    background: url('https://i.imgur.com/6TSr0Pe.png') no-repeat center center / contain;
+    z-index: 10;
+    touch-action: none;
+  }
+  #cap {
+    position: absolute;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50px;
+    height: 30px;
+    background: url('https://i.imgur.com/zmFTD5G.png') no-repeat center center / contain;
+    pointer-events: none;
+    z-index: 11;
+  }
+  .bullet {
+    position: absolute;
+    width: 10px;
+    height: 4px;
+    background: #ff0;
+    border-radius: 2px;
+    z-index: 20;
+  }
+  .enemy {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    font-size: 40px;
+    text-align: center;
+    line-height: 50px;
+    user-select: none;
+  }
+  .reward {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    font-size: 40px;
+    text-align: center;
+    line-height: 40px;
+    user-select: none;
+  }
+  #dragArea {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100vw;
+    height: 80px;
+    background: rgba(255,255,255,0.1);
+    touch-action: none;
+    z-index: 20;
+  }
+  #startScreen {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: #111;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    font-size: 1.2rem;
+    z-index: 10000;
+  }
+  #startScreen input, #startScreen button {
+    padding: 8px 12px;
+    font-size: 1.1rem;
+  }
+  #difficultyButtons button {
+    margin: 0 10px;
+    padding: 10px 20px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    background: #333;
+    border: none;
+    color: white;
+    border-radius: 6px;
+    transition: background 0.3s;
+  }
+  #difficultyButtons button:hover {
+    background: #0a0;
+  }
+  #startGameBtn {
+    margin-top: 20px;
+    padding: 10px 30px;
+    font-size: 1.3rem;
+    cursor: pointer;
+    background: #0a0;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    display: none;
+  }
+  #scoreLivesContainer {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    display: flex;
+    justify-content: space-between;
+    font-weight: bold;
+    font-size: 1.2rem;
+    z-index: 100;
+    user-select: none;
+  }
+</style>
 </head>
 <body>
-  <div class="container">
-    <input type="text" id="nameInput" placeholder="Enter your name" />
-    <button onclick="generateCharacter()">Submit Name</button>
-    <h1 id="welcomeText"></h1>
-    <canvas id="characterCanvas" width="250" height="300"></canvas>
+<div id="startScreen">
+  <div>
+    <label for="playerName">Enter your name:</label><br/>
+    <input id="playerName" type="text" placeholder="Player name" />
   </div>
+  <div id="difficultyButtons" style="display:none;">
+    <button data-level="easy">Easy</button>
+    <button data-level="medium">Medium</button>
+    <button data-level="hard">Hard</button>
+  </div>
+  <button id="startGameBtn">Start Game</button>
+</div>
 
-  <script>
-    const characterOptions = [
-      "with Army Cap & AK Gun",
-      "in Ninja Costume with Shuriken",
-      "with Cyberpunk Shades & Laser Sword",
-      "wearing Pirate Hat with Hook",
-      "in Space Suit with Jetpack",
-      "with Cowboy Hat & Revolver",
-      "as a Samurai with Katana"
-    ];
+<div id="scoreLivesContainer" style="display:none;">
+  <div id="score">Score: 0</div>
+  <div id="lives"></div>
+</div>
 
-    function generateCharacter() {
-      const name = document.getElementById('nameInput').value.trim();
-      const welcomeText = document.getElementById('welcomeText');
-      const canvas = document.getElementById('characterCanvas');
-      const ctx = canvas.getContext('2d');
+<div id="gameContainer" style="display:none;">
+  <div id="player"></div>
+  <div id="cap"></div>
+  <div id="dragArea"></div>
+  <div id="appreciation"></div>
+  <div id="gameOverScreen">
+    <div id="gameOverText">Game Over! Score: 0</div>
+    <button id="restartBtn">Restart</button>
+  </div>
+</div>
 
-      if (!name) {
-        welcomeText.textContent = "Please enter a name.";
-        return;
-      }
+<audio id="bgMusic" loop volume="0.15" preload="auto" src="https://cdn.pixabay.com/download/audio/2022/03/29/audio_31cde2b03e.mp3?filename=epic-military-march-11255.mp3"></audio>
+<audio id="fireSound" volume="0.03" preload="auto" src="https://freesound.org/data/previews/522/522702_5121236-lq.mp3"></audio>
+<audio id="hitSound" volume="0.4" preload="auto" src="https://freesound.org/data/previews/256/256113_4486188-lq.mp3"></audio>
 
-      // Random character
-      const character = characterOptions[Math.floor(Math.random() * characterOptions.length)];
-      welcomeText.textContent = `Welcome, ${name} (${character})!`;
+<script>
+  const gameContainer = document.getElementById('gameContainer');
+  const player = document.getElementById('player');
+  const cap = document.getElementById('cap');
+  const dragArea = document.getElementById('dragArea');
+  const scoreEl = document.getElementById('score');
+  const livesEl = document.getElementById('lives');
+  const appreciationEl = document.getElementById('appreciation');
+  const gameOverScreen = document.getElementById('gameOverScreen');
+  const gameOverText = document.getElementById('gameOverText');
+  const restartBtn = document.getElementById('restartBtn');
+  const startScreen = document.getElementById('startScreen');
+  const difficultyButtons = document.getElementById('difficultyButtons');
+  const startGameBtn = document.getElementById('startGameBtn');
+  const playerNameInput = document.getElementById('playerName');
+  const scoreLivesContainer = document.getElementById('scoreLivesContainer');
 
-      // Clear canvas
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+  let score = 0;
+  let lives = 3;
+  let difficulty = null;
+  let playerName = '';
+  let enemies = [];
+  let bullets = [];
+  let rewards = [];
+  let enemyInterval, rewardInterval;
+  let bgMusic = document.getElementById('bgMusic');
+  let fireSound = document.getElementById('fireSound');
+  let hitSound = document.getElementById('hitSound');
 
-      // Draw simple character
-      ctx.fillStyle = '#00ff88';
-      ctx.beginPath(); // Head
-      ctx.arc(125, 60, 30, 0, Math.PI * 2);
-      ctx.fill();
+  function createHeart() {
+    const heart = document.createElement('div');
+    heart.classList.add('heart');
+    return heart;
+  }
 
-      ctx.fillStyle = '#ffffff'; // Body
-      ctx.fillRect(110, 90, 30, 80);
-
-      ctx.strokeStyle = '#ffffff'; // Arms
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.moveTo(110, 100);
-      ctx.lineTo(80, 130);
-      ctx.moveTo(140, 100);
-      ctx.lineTo(170, 130);
-      ctx.stroke();
-
-      ctx.beginPath(); // Legs
-      ctx.moveTo(115, 170);
-      ctx.lineTo(110, 210);
-      ctx.moveTo(135, 170);
-      ctx.lineTo(140, 210);
-      ctx.stroke();
-
-      // Gun / Sword / Shuriken icon (optional)
-      ctx.fillStyle = 'red';
-      ctx.fillRect(75, 125, 8, 25); // Weapon
-
-      ctx.font = "12px Arial";
-      ctx.fillStyle = "#aaa";
-      ctx.fillText(character, 10, 290); // Caption
+  function updateLives() {
+    livesEl.innerHTML = '';
+    for(let i=0; i<lives; i++) {
+      livesEl.appendChild(createHeart());
     }
-  </script>
-</body>
-</html>
+  }
+
+  function setScore(val) {
+    score = val;
+    scoreEl.textContent = `Score: ${score}`;
+  }
+
+  function showAppreciation(text) {
+    appreciationEl.textContent = text;
+    appreciationEl.style.display = 'block';
+    setTimeout(() => { appreciationEl.style.display = 'none'; }, 2500);
+  }
+
+  function createEnemy() {
+    const enemy = document.createElement('div');
+    enemy.classList.add('enemy');
+    enemy.style.left = Math.random() * (gameContainer.clientWidth - 50) + 'px';
+    enemy.style.top = '-60px';
+    enemy.textContent = '🎯';
+    enemy.speed = 1 + Math.random() * (difficulty === 'easy' ? 1 : difficulty === 'medium' ? 2 : 3);
+    gameContainer.appendChild(enemy);
+    enemies.push(enemy);
+  }
+
+  function createReward() {
+    const reward = document.createElement('div');
+    reward.classList.add('reward');
+    reward.style.left = Math.random() * (gameContainer.clientWidth - 40) + 'px';
+    reward.style.top = '-50px';
+    reward.textContent = '💚';
+    reward.speed = 1.5 + Math.random();
+    gameContainer.appendChild(reward);
+    rewards.push(reward);
+  }
+
+  function fireBullet() {
+    const bullet = document.createElement('div');
+    bullet.classList.add('bullet');
+    const playerRect = player.getBoundingClientRect();
+    bullet.style.left = (playerRect.left + playerRect.width / 2 - 5) + 'px';
+    bullet.style.top = (playerRect.top - 4) + 'px';
+    bullet.speed = 7;
+    gameContainer.appendChild(bullet);
+    bullets.push(bullet);
+    fireSound.currentTime = 0;
+    fireSound.play();
+  }
+
+  function moveObjects() {
+    // Move bullets up
+    bullets.forEach((bullet, i) => {
+      let top = parseFloat(bullet.style.top);
+      top -= bullet.speed;
+      if(top < -10) {
+        bullet.remove();
+        bullets.splice(i, 1);
+      } else {
+        bullet.style.top = top + 'px';
+      }
+    });
+
+    // Move enemies down
+    enemies.forEach((enemy, i) => {
+      let top = parseFloat(enemy.style.top);
+      top += enemy.speed;
+      if(top > gameContainer.clientHeight) {
+        enemy.remove();
+        enemies.splice(i, 1);
+        lives--;
+        updateLives();
+        if(lives <= 0) {
+          endGame();
+        }
+      } else {
+        enemy.style.top = top + 'px';
+      }
+    });
+
+    // Move rewards down
+    rewards.forEach((reward, i) => {
+      let top = parseFloat(reward.style.top);
+      top += reward.speed;
+      if(top > gameContainer.clientHeight) {
+        reward.remove();
+        rewards.splice(i, 1);
+      } else {
+        reward.style.top = top + 'px';
+      }
+    });
+  }
+
+  function checkCollisions() {
+    bullets.forEach((bullet, bIndex) => {
+      const bulletRect = bullet.getBoundingClientRect();
+
+      enemies.forEach((enemy, eIndex) => {
+        const enemyRect = enemy.getBoundingClientRect();
+        if(!(bulletRect.right < enemyRect.left || 
+             bulletRect.left > enemyRect.right || 
+             bulletRect.bottom < enemyRect.top || 
+             bulletRect.top > enemyRect.bottom)) {
+          // Collision bullet & enemy
+          enemy.remove();
+          enemies.splice(eIndex,1);
+          bullet.remove();
+          bullets.splice(bIndex,1);
+          hitSound.currentTime = 0;
+          hitSound.play();
+          setScore(score + 10);
+          showAppreciation("+10");
+        }
+      });
+
+      rewards.forEach((reward, rIndex) => {
+        const rewardRect = reward.getBoundingClientRect();
+        if(!(bulletRect.right < rewardRect.left || 
+             bulletRect.left > rewardRect.right || 
+             bulletRect.bottom < rewardRect
