@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-<html>
+<!DOCTYPE html><html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -60,23 +59,14 @@
     <label for="playerName">Enter your name:</label>
     <input type="text" id="playerName" />
     <button onclick="startGame()">Start Game</button>
-  </div>
-
-  <div id="ui">
+  </div>  <div id="ui">
     <div id="score">Score: 0</div>
-  </div>
-
-  <div id="gameOver">
+  </div>  <div id="gameOver">
     <div id="gameOverText"></div>
     <button onclick="location.reload()">Restart</button>
-  </div>
+  </div>  <div id="touchControl"></div><canvas id="gameCanvas"></canvas>
 
-  <div id="touchControl"></div>
-
-  <canvas id="gameCanvas"></canvas>
-
-  <audio id="fireSound" src="https://cdn.pixabay.com/audio/2022/03/15/audio_34ba7d3506.mp3" preload="auto"></audio>
-  <audio id="hitSound" src="https://cdn.pixabay.com/audio/2022/03/30/audio_28745929d5.mp3" preload="auto"></audio>
+<audio id="fireSound" src="https://cdn.pixabay.com/audio/2022/03/15/audio_34ba7d3506.mp3" preload="auto"></audio> <audio id="hitSound" src="https://cdn.pixabay.com/audio/2022/03/30/audio_28745929d5.mp3" preload="auto"></audio>
 
   <script>
     const canvas = document.getElementById('gameCanvas');
@@ -236,6 +226,5 @@
         player.x = e.touches[0].clientX - player.width / 2;
       }
     });
-  </script>
-</body>
+  </script></body>
 </html>
