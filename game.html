@@ -3,382 +3,532 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Shooting Game</title>
+<title>Full Space Shooter Game with Name & Difficulty & Sounds</title>
 <style>
-  body, html {
-    margin: 0; padding: 0; overflow: hidden;
-    background: #111;
-    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-    color: #fff;
+  body {
+    margin: 0; background: #000; color: #eee;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     user-select: none;
-    -webkit-user-select: none;
-    touch-action: none;
-  }
-  #gameContainer {
-    position: relative;
-    width: 100vw;
-    height: 90vh;
-    background: linear-gradient(180deg, #222 0%, #000 100%);
     overflow: hidden;
   }
-  #uiContainer {
+  #game-container {
     position: relative;
-    height: 10vh;
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    background: #222;
+    width: 800px; height: 600px;
+    margin: 20px auto;
+    background: radial-gradient(ellipse at center, #00111f 0%, #000000 100%);
+    border: 3px solid #0f7;
+    border-radius: 15px;
+    overflow: hidden;
   }
-  #score {
-    font-size: 1.4rem;
+  #ui {
+    position: absolute; top: 10px; left: 10px; width: 780px;
+    display: flex; align-items: center; gap: 20px;
+    z-index: 1000;
+    font-size: 18px;
+  }
+  #name-input, #submit-name-btn, #difficulty-select, #start-btn {
+    padding: 6px 10px;
+    font-size: 16px;
+    border-radius: 6px;
+    border: none;
+    outline: none;
     font-weight: bold;
-    padding-left: 10px;
+    user-select:none;
+    cursor: pointer;
   }
-  #lives {
+  #name-input {
+    width: 180px;
+    color: #000;
+  }
+  #difficulty-select, #start-btn, #submit-name-btn {
+    background-color: #0f7;
+    color: #000;
+  }
+  #difficulty-select:disabled, #start-btn:disabled, #submit-name-btn:disabled {
+    background-color: #555;
+    cursor: not-allowed;
+  }
+  #scoreboard {
+    font-weight: bold;
+    user-select:none;
+  }
+  #hearts-container {
     display: flex;
-    gap: 5px;
+    gap: 6px;
+    user-select:none;
   }
   .heart {
-    width: 24px;
-    height: 24px;
-    background: url('https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Heart_icon_red.svg/1024px-Heart_icon_red.svg.png') no-repeat center center / contain;
+    width: 24px; height: 24px;
+    background: url('https://i.imgur.com/PaJ4f0M.png') no-repeat center center;
+    background-size: contain;
   }
-  #appreciation {
+  #game-canvas {
+    background: transparent;
+    display: block;
+    margin: 0 auto;
+    border-radius: 15px;
+    cursor: grab;
+  }
+  #appreciation-text {
     position: absolute;
-    top: 40%;
-    width: 100%;
-    text-align: center;
-    font-size: 2.5rem;
-    color: #0f0;
-    font-weight: bold;
-    display: none;
-  }
-  #gameOverScreen {
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.85);
-    color: #fff;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    font-size: 1.8rem;
-    display: none;
-    z-index: 1000;
-  }
-  #restartBtn {
-    margin-top: 20px;
-    padding: 10px 20px;
-    font-size: 1.3rem;
-    cursor: pointer;
-    background: #0a0;
-    border: none;
-    border-radius: 6px;
-    color: white;
-  }
-  #player {
-    position: absolute;
-    bottom: 20px;
-    left: 50%;
+    top: 550px; left: 50%;
     transform: translateX(-50%);
-    width: 80px;
-    height: 80px;
-    background: url('https://i.imgur.com/6TSr0Pe.png') no-repeat center center / contain;
-    z-index: 10;
-    touch-action: none;
-  }
-  #cap {
-    position: absolute;
-    bottom: 100px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 50px;
-    height: 30px;
-    background: url('https://i.imgur.com/zmFTD5G.png') no-repeat center center / contain;
+    font-size: 22px;
+    font-weight: 900;
+    color: #0f7;
+    text-shadow: 0 0 10px #0f7, 0 0 20px #0f7;
     pointer-events: none;
-    z-index: 11;
+    user-select:none;
   }
-  .bullet {
+  #game-over-screen {
     position: absolute;
-    width: 10px;
-    height: 4px;
-    background: #ff0;
-    border-radius: 2px;
-    z-index: 20;
-  }
-  .enemy {
-    position: absolute;
-    width: 50px;
-    height: 50px;
-    font-size: 40px;
-    text-align: center;
-    line-height: 50px;
-    user-select: none;
-  }
-  .reward {
-    position: absolute;
-    width: 40px;
-    height: 40px;
-    font-size: 40px;
-    text-align: center;
-    line-height: 40px;
-    user-select: none;
-  }
-  #dragArea {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100vw;
-    height: 80px;
-    background: rgba(255,255,255,0.1);
-    touch-action: none;
-    z-index: 20;
-  }
-  #startScreen {
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: #111;
-    color: white;
+    top: 0; left: 0;
+    width: 800px; height: 600px;
+    background: rgba(0,0,0,0.9);
+    color: #0f7;
+    font-size: 32px;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    gap: 15px;
-    font-size: 1.2rem;
-    z-index: 10000;
+    z-index: 2000;
+    border-radius: 15px;
+    user-select:none;
   }
-  #startScreen input, #startScreen button {
-    padding: 8px 12px;
-    font-size: 1.1rem;
-  }
-  #difficultyButtons button {
-    margin: 0 10px;
-    padding: 10px 20px;
-    font-size: 1.2rem;
-    cursor: pointer;
-    background: #333;
-    border: none;
-    color: white;
-    border-radius: 6px;
-    transition: background 0.3s;
-  }
-  #difficultyButtons button:hover {
-    background: #0a0;
-  }
-  #startGameBtn {
+  #restart-btn {
     margin-top: 20px;
     padding: 10px 30px;
-    font-size: 1.3rem;
-    cursor: pointer;
-    background: #0a0;
+    font-size: 20px;
+    background-color: #0f7;
     border: none;
-    border-radius: 6px;
-    color: white;
-    display: none;
-  }
-  #scoreLivesContainer {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    right: 10px;
-    display: flex;
-    justify-content: space-between;
+    border-radius: 12px;
+    cursor: pointer;
     font-weight: bold;
-    font-size: 1.2rem;
-    z-index: 100;
-    user-select: none;
+    color: #000;
+    user-select:none;
+  }
+  #restart-btn:hover {
+    background-color: #0c5;
   }
 </style>
 </head>
 <body>
-<div id="startScreen">
-  <div>
-    <label for="playerName">Enter your name:</label><br/>
-    <input id="playerName" type="text" placeholder="Player name" />
-  </div>
-  <div id="difficultyButtons" style="display:none;">
-    <button data-level="easy">Easy</button>
-    <button data-level="medium">Medium</button>
-    <button data-level="hard">Hard</button>
-  </div>
-  <button id="startGameBtn">Start Game</button>
-</div>
+<div id="game-container">
+  <canvas id="game-canvas" width="800" height="600" tabindex="0"></canvas>
 
-<div id="scoreLivesContainer" style="display:none;">
-  <div id="score">Score: 0</div>
-  <div id="lives"></div>
-</div>
+  <div id="ui">
+    <input id="name-input" type="text" placeholder="Enter Your Name" maxlength="12" />
+    <button id="submit-name-btn">Submit Name</button>
 
-<div id="gameContainer" style="display:none;">
-  <div id="player"></div>
-  <div id="cap"></div>
-  <div id="dragArea"></div>
-  <div id="appreciation"></div>
-  <div id="gameOverScreen">
-    <div id="gameOverText">Game Over! Score: 0</div>
-    <button id="restartBtn">Restart</button>
+    <select id="difficulty-select" disabled>
+      <option value="" disabled selected>Select Difficulty</option>
+      <option value="easy">Easy</option>
+      <option value="medium">Medium</option>
+      <option value="hard">Hard</option>
+    </select>
+
+    <button id="start-btn" disabled>Start Game</button>
+
+    <div id="scoreboard">Score: 0</div>
+    <div id="hearts-container"></div>
+  </div>
+
+  <div id="appreciation-text"></div>
+  <div id="game-over-screen" style="display:none;">
+    <div>Game Over</div>
+    <div id="final-score" style="margin-top: 10px; font-size: 24px;"></div>
+    <button id="restart-btn">Restart</button>
   </div>
 </div>
-
-<audio id="bgMusic" loop volume="0.15" preload="auto" src="https://cdn.pixabay.com/download/audio/2022/03/29/audio_31cde2b03e.mp3?filename=epic-military-march-11255.mp3"></audio>
-<audio id="fireSound" volume="0.03" preload="auto" src="https://freesound.org/data/previews/522/522702_5121236-lq.mp3"></audio>
-<audio id="hitSound" volume="0.4" preload="auto" src="https://freesound.org/data/previews/256/256113_4486188-lq.mp3"></audio>
 
 <script>
-  const gameContainer = document.getElementById('gameContainer');
-  const player = document.getElementById('player');
-  const cap = document.getElementById('cap');
-  const dragArea = document.getElementById('dragArea');
-  const scoreEl = document.getElementById('score');
-  const livesEl = document.getElementById('lives');
-  const appreciationEl = document.getElementById('appreciation');
-  const gameOverScreen = document.getElementById('gameOverScreen');
-  const gameOverText = document.getElementById('gameOverText');
-  const restartBtn = document.getElementById('restartBtn');
-  const startScreen = document.getElementById('startScreen');
-  const difficultyButtons = document.getElementById('difficultyButtons');
-  const startGameBtn = document.getElementById('startGameBtn');
-  const playerNameInput = document.getElementById('playerName');
-  const scoreLivesContainer = document.getElementById('scoreLivesContainer');
+(() => {
+  // === Sound assets ===
+  const sounds = {
+    bgMusic: new Audio('https://cdn.pixabay.com/download/audio/2021/09/01/audio_8e1ee0f6c2.mp3?filename=futuristic-game-loop-118196.mp3'),
+    fireSound: new Audio('https://cdn.pixabay.com/download/audio/2021/08/04/audio_8d5b84dfd8.mp3?filename=laser-gun-6372.mp3'),
+    hitSound: new Audio('https://cdn.pixabay.com/download/audio/2022/03/04/audio_06b4158b08.mp3?filename=explosion-6836.mp3')
+  };
 
-  let score = 0;
-  let lives = 3;
-  let difficulty = null;
+  // Loop bgMusic
+  sounds.bgMusic.loop = true;
+  sounds.bgMusic.volume = 0.15;
+
+  // Short fire and hit sounds volume
+  sounds.fireSound.volume = 0.3;
+  sounds.hitSound.volume = 0.5;
+
+  // === Game constants and variables ===
+  const canvas = document.getElementById('game-canvas');
+  const ctx = canvas.getContext('2d');
+  const width = canvas.width;
+  const height = canvas.height;
+
+  // UI Elements
+  const nameInput = document.getElementById('name-input');
+  const submitNameBtn = document.getElementById('submit-name-btn');
+  const difficultySelect = document.getElementById('difficulty-select');
+  const startBtn = document.getElementById('start-btn');
+  const scoreboard = document.getElementById('scoreboard');
+  const heartsContainer = document.getElementById('hearts-container');
+  const appreciationText = document.getElementById('appreciation-text');
+  const gameOverScreen = document.getElementById('game-over-screen');
+  const finalScoreText = document.getElementById('final-score');
+  const restartBtn = document.getElementById('restart-btn');
+
+  // Game state
   let playerName = '';
-  let enemies = [];
-  let bullets = [];
-  let rewards = [];
-  let enemyInterval, rewardInterval;
-  let bgMusic = document.getElementById('bgMusic');
-  let fireSound = document.getElementById('fireSound');
-  let hitSound = document.getElementById('hitSound');
+  let difficulty = '';
+  let gameStarted = false;
+  let gameOver = false;
 
-  function createHeart() {
-    const heart = document.createElement('div');
-    heart.classList.add('heart');
-    return heart;
+  let player = {
+    x: width / 2,
+    y: height - 70,
+    width: 60,
+    height: 60,
+    speed: 7,
+    lives: 3,
+    bullets: [],
+    canShoot: true,
+    shootCooldown: 300, // ms
+    lastShootTime: 0,
+  };
+
+  let enemies = [];
+  let rewards = [];
+  let score = 0;
+
+  // Difficulty settings
+  const difficulties = {
+    easy: {
+      enemyCount: 4,
+      enemySpeed: 1.5,
+      rewardFreq: 10000,
+      playerSpeed: 7,
+      enemyBulletSpeed: 2,
+    },
+    medium: {
+      enemyCount: 6,
+      enemySpeed: 2.2,
+      rewardFreq: 7000,
+      playerSpeed: 9,
+      enemyBulletSpeed: 3,
+    },
+    hard: {
+      enemyCount: 8,
+      enemySpeed: 3,
+      rewardFreq: 5000,
+      playerSpeed: 12,
+      enemyBulletSpeed: 4,
+    },
+  };
+
+  let currentDifficultySettings = {};
+
+  // Appreciation milestone scores and messages
+  const appreciationMilestones = [
+    { score: 10, text: "Nice Start!" },
+    { score: 20, text: "Good Job!" },
+    { score: 40, text: "Awesome!" },
+    { score: 60, text: "Excellent!" },
+    { score: 80, text: "Fantastic!" },
+    { score: 100, text: "Legendary!" }
+  ];
+  let nextAppreciationIndex = 0;
+
+  // Load images (simple shapes will be drawn for demo)
+  // We'll use colored rectangles/circles for player, enemies, bullets, rewards, hearts
+
+  // ===== Functions =====
+
+  // Utility random int in range [min, max]
+  function randInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
-  function updateLives() {
-    livesEl.innerHTML = '';
-    for(let i=0; i<lives; i++) {
-      livesEl.appendChild(createHeart());
+  // Draw player as a green triangle pointing up
+  function drawPlayer() {
+    ctx.fillStyle = '#0f7';
+    ctx.beginPath();
+    ctx.moveTo(player.x, player.y - player.height / 2);
+    ctx.lineTo(player.x - player.width / 2, player.y + player.height / 2);
+    ctx.lineTo(player.x + player.width / 2, player.y + player.height / 2);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // Draw bullet as small yellow rectangle
+  function drawBullet(bullet) {
+    ctx.fillStyle = '#ff0';
+    ctx.fillRect(bullet.x - 3, bullet.y - 10, 6, 12);
+  }
+
+  // Draw enemy as red circle
+  function drawEnemy(enemy) {
+    ctx.fillStyle = '#f00';
+    ctx.beginPath();
+    ctx.arc(enemy.x, enemy.y, enemy.radius, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Draw reward as blue star (simple 5-point star)
+  function drawReward(reward) {
+    const cx = reward.x, cy = reward.y, spikes = 5;
+    const outerRadius = 12;
+    const innerRadius = 6;
+    let rot = Math.PI / 2 * 3;
+    let x = cx;
+    let y = cy;
+    const step = Math.PI / spikes;
+
+    ctx.fillStyle = '#08f';
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - outerRadius);
+    for(let i = 0; i < spikes; i++){
+      x = cx + Math.cos(rot) * outerRadius;
+      y = cy + Math.sin(rot) * outerRadius;
+      ctx.lineTo(x, y);
+      rot += step;
+
+      x = cx + Math.cos(rot) * innerRadius;
+      y = cy + Math.sin(rot) * innerRadius;
+      ctx.lineTo(x, y);
+      rot += step;
+    }
+    ctx.lineTo(cx, cy - outerRadius);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // Draw hearts for lives
+  function updateHeartsDisplay() {
+    heartsContainer.innerHTML = '';
+    for(let i = 0; i < player.lives; i++) {
+      const heartDiv = document.createElement('div');
+      heartDiv.classList.add('heart');
+      heartsContainer.appendChild(heartDiv);
     }
   }
 
-  function setScore(val) {
-    score = val;
-    scoreEl.textContent = `Score: ${score}`;
+  // Reset game state
+  function resetGame() {
+    player.lives = 3;
+    player.x = width / 2;
+    player.y = height - 70;
+    player.bullets = [];
+    enemies = [];
+    rewards = [];
+    score = 0;
+    nextAppreciationIndex = 0;
+    appreciationText.textContent = '';
+    gameOver = false;
+    updateHeartsDisplay();
+    updateScoreboard();
   }
 
-  function showAppreciation(text) {
-    appreciationEl.textContent = text;
-    appreciationEl.style.display = 'block';
-    setTimeout(() => { appreciationEl.style.display = 'none'; }, 2500);
+  // Spawn enemies according to difficulty
+  function spawnEnemies() {
+    enemies = [];
+    for(let i = 0; i < currentDifficultySettings.enemyCount; i++) {
+      enemies.push({
+        x: randInt(40, width - 40),
+        y: randInt(-600, -50),
+        radius: 25,
+        speed: currentDifficultySettings.enemySpeed + Math.random(),
+        direction: 1,  // 1 down
+      });
+    }
   }
 
-  function createEnemy() {
-    const enemy = document.createElement('div');
-    enemy.classList.add('enemy');
-    enemy.style.left = Math.random() * (gameContainer.clientWidth - 50) + 'px';
-    enemy.style.top = '-60px';
-    enemy.textContent = '🎯';
-    enemy.speed = 1 + Math.random() * (difficulty === 'easy' ? 1 : difficulty === 'medium' ? 2 : 3);
-    gameContainer.appendChild(enemy);
-    enemies.push(enemy);
+  // Spawn a reward at a random position above screen
+  function spawnReward() {
+    rewards.push({
+      x: randInt(30, width - 30),
+      y: -20,
+      speed: 1.2,
+      collected: false,
+    });
   }
 
-  function createReward() {
-    const reward = document.createElement('div');
-    reward.classList.add('reward');
-    reward.style.left = Math.random() * (gameContainer.clientWidth - 40) + 'px';
-    reward.style.top = '-50px';
-    reward.textContent = '💚';
-    reward.speed = 1.5 + Math.random();
-    gameContainer.appendChild(reward);
-    rewards.push(reward);
+  // Draw everything
+  function draw() {
+    ctx.clearRect(0, 0, width, height);
+
+    // Player
+    drawPlayer();
+
+    // Bullets
+    player.bullets.forEach(drawBullet);
+
+    // Enemies
+    enemies.forEach(drawEnemy);
+
+    // Rewards
+    rewards.forEach(drawReward);
   }
 
-  function fireBullet() {
-    const bullet = document.createElement('div');
-    bullet.classList.add('bullet');
-    const playerRect = player.getBoundingClientRect();
-    bullet.style.left = (playerRect.left + playerRect.width / 2 - 5) + 'px';
-    bullet.style.top = (playerRect.top - 4) + 'px';
-    bullet.speed = 7;
-    gameContainer.appendChild(bullet);
-    bullets.push(bullet);
-    fireSound.currentTime = 0;
-    fireSound.play();
-  }
+  // Update positions and logic
+  function update(deltaTime) {
+    if(gameOver) return;
 
-  function moveObjects() {
     // Move bullets up
-    bullets.forEach((bullet, i) => {
-      let top = parseFloat(bullet.style.top);
-      top -= bullet.speed;
-      if(top < -10) {
-        bullet.remove();
-        bullets.splice(i, 1);
-      } else {
-        bullet.style.top = top + 'px';
+    player.bullets.forEach((b, idx) => {
+      b.y -= b.speed;
+      if(b.y < -10) {
+        player.bullets.splice(idx, 1);
       }
     });
 
-    // Move enemies down
-    enemies.forEach((enemy, i) => {
-      let top = parseFloat(enemy.style.top);
-      top += enemy.speed;
-      if(top > gameContainer.clientHeight) {
-        enemy.remove();
-        enemies.splice(i, 1);
-        lives--;
-        updateLives();
-        if(lives <= 0) {
-          endGame();
-        }
-      } else {
-        enemy.style.top = top + 'px';
+    // Move enemies down and side to side (simple sway)
+    enemies.forEach(enemy => {
+      enemy.y += enemy.speed;
+      enemy.x += Math.sin(Date.now() / 500 + enemy.x) * 0.5;
+
+      // Reset enemy if goes out bottom
+      if(enemy.y - enemy.radius > height) {
+        enemy.x = randInt(40, width - 40);
+        enemy.y = randInt(-600, -50);
+        enemy.speed = currentDifficultySettings.enemySpeed + Math.random();
       }
     });
 
     // Move rewards down
-    rewards.forEach((reward, i) => {
-      let top = parseFloat(reward.style.top);
-      top += reward.speed;
-      if(top > gameContainer.clientHeight) {
-        reward.remove();
-        rewards.splice(i, 1);
-      } else {
-        reward.style.top = top + 'px';
+    rewards.forEach((reward, idx) => {
+      reward.y += reward.speed;
+      if(reward.y > height + 20) {
+        rewards.splice(idx, 1);
       }
     });
-  }
 
-  function checkCollisions() {
-    bullets.forEach((bullet, bIndex) => {
-      const bulletRect = bullet.getBoundingClientRect();
-
-      enemies.forEach((enemy, eIndex) => {
-        const enemyRect = enemy.getBoundingClientRect();
-        if(!(bulletRect.right < enemyRect.left || 
-             bulletRect.left > enemyRect.right || 
-             bulletRect.bottom < enemyRect.top || 
-             bulletRect.top > enemyRect.bottom)) {
-          // Collision bullet & enemy
-          enemy.remove();
-          enemies.splice(eIndex,1);
-          bullet.remove();
-          bullets.splice(bIndex,1);
-          hitSound.currentTime = 0;
-          hitSound.play();
-          setScore(score + 10);
-          showAppreciation("+10");
+    // Collision detection bullets <-> enemies
+    player.bullets.forEach((bullet, bIdx) => {
+      enemies.forEach((enemy, eIdx) => {
+        const dx = bullet.x - enemy.x;
+        const dy = bullet.y - enemy.y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if(dist < enemy.radius + 6) {
+          // Enemy hit
+          enemies.splice(eIdx, 1);
+          player.bullets.splice(bIdx, 1);
+          score += 2;
+          updateScoreboard();
+          playSound('hitSound');
+          // Spawn a new enemy
+          enemies.push({
+            x: randInt(40, width - 40),
+            y: randInt(-600, -50),
+            radius: 25,
+            speed: currentDifficultySettings.enemySpeed + Math.random(),
+            direction: 1,
+          });
         }
       });
+    });
 
-      rewards.forEach((reward, rIndex) => {
-        const rewardRect = reward.getBoundingClientRect();
-        if(!(bulletRect.right < rewardRect.left || 
-             bulletRect.left > rewardRect.right || 
-             bulletRect.bottom < rewardRect
+    // Collision detection enemies <-> player (simple radius)
+    enemies.forEach((enemy, eIdx) => {
+      const dx = player.x - enemy.x;
+      const dy = player.y - enemy.y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      if(dist < enemy.radius + player.width / 2) {
+        enemies.splice(eIdx, 1);
+        player.lives--;
+        updateHeartsDisplay();
+        playSound('hitSound');
+        if(player.lives <= 0) {
+          endGame();
+        }
+      }
+    });
+
+    // Collision detection rewards <-> player
+    rewards.forEach((reward, rIdx) => {
+      const dx = player.x - reward.x;
+      const dy = player.y - reward.y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      if(dist < 20 + player.width / 2) {
+        rewards.splice(rIdx, 1);
+        score += 5;
+        updateScoreboard();
+        playSound('hitSound');
+      }
+    });
+
+    // Appreciation text update
+    if(nextAppreciationIndex < appreciationMilestones.length && score >= appreciationMilestones[nextAppreciationIndex].score) {
+      appreciationText.textContent = appreciationMilestones[nextAppreciationIndex].text;
+      // Show for 3 seconds then fade out
+      setTimeout(() => {
+        appreciationText.textContent = '';
+      }, 3000);
+      nextAppreciationIndex++;
+    }
+  }
+
+  // Draw loop
+  let lastTime = 0;
+  function gameLoop(timestamp) {
+    if(!lastTime) lastTime = timestamp;
+    const deltaTime = timestamp - lastTime;
+    lastTime = timestamp;
+
+    if(gameStarted && !gameOver) {
+      update(deltaTime);
+      draw();
+    }
+
+    requestAnimationFrame(gameLoop);
+  }
+
+  // Update scoreboard text
+  function updateScoreboard() {
+    scoreboard.textContent = `${playerName} - Score: ${score}`;
+  }
+
+  // Play a sound by name
+  function playSound(name) {
+    const sound = sounds[name];
+    if(sound) {
+      // Clone to allow overlap
+      const sndClone = sound.cloneNode();
+      sndClone.volume = sound.volume;
+      sndClone.play();
+    }
+  }
+
+  // Player shooting bullets
+  function shoot() {
+    if(!gameStarted || gameOver) return;
+    const now = Date.now();
+    if(now - player.lastShootTime < player.shootCooldown) return;
+
+    player.bullets.push({
+      x: player.x,
+      y: player.y - player.height / 2,
+      speed: 10,
+    });
+    player.lastShootTime = now;
+    playSound('fireSound');
+  }
+
+  // Handle keyboard input for player movement and shooting
+  const keys = {};
+  window.addEventListener('keydown', (e) => {
+    keys[e.code] = true;
+    if(e.code === 'Space') {
+      shoot();
+    }
+  });
+  window.addEventListener('keyup', (e) => {
+    keys[e.code] = false;
+  });
+
+  // Drag controls for player on canvas
+  let dragging = false;
+  let dragOffsetX = 0;
+
+  canvas.addEventListener('mousedown', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY
