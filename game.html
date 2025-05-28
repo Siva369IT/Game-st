@@ -79,6 +79,7 @@
     text-shadow: 0 0 10px #0f7, 0 0 20px #0f7;
     pointer-events: none;
     user-select:none;
+    height: 28px;
   }
   #game-over-screen {
     position: absolute;
@@ -150,15 +151,12 @@
     hitSound: new Audio('https://cdn.pixabay.com/download/audio/2022/03/04/audio_06b4158b08.mp3?filename=explosion-6836.mp3')
   };
 
-  // Loop bgMusic
   sounds.bgMusic.loop = true;
   sounds.bgMusic.volume = 0.15;
-
-  // Short fire and hit sounds volume
   sounds.fireSound.volume = 0.3;
   sounds.hitSound.volume = 0.5;
 
-  // === Game constants and variables ===
+  // Canvas setup
   const canvas = document.getElementById('game-canvas');
   const ctx = canvas.getContext('2d');
   const width = canvas.width;
@@ -182,6 +180,7 @@
   let gameStarted = false;
   let gameOver = false;
 
+  // Player object
   let player = {
     x: width / 2,
     y: height - 70,
@@ -191,7 +190,7 @@
     lives: 3,
     bullets: [],
     canShoot: true,
-    shootCooldown: 300, // ms
+    shootCooldown: 300,
     lastShootTime: 0,
   };
 
@@ -199,7 +198,6 @@
   let rewards = [];
   let score = 0;
 
-  // Difficulty settings
   const difficulties = {
     easy: {
       enemyCount: 4,
@@ -226,7 +224,6 @@
 
   let currentDifficultySettings = {};
 
-  // Appreciation milestone scores and messages
   const appreciationMilestones = [
     { score: 10, text: "Nice Start!" },
     { score: 20, text: "Good Job!" },
@@ -237,17 +234,12 @@
   ];
   let nextAppreciationIndex = 0;
 
-  // Load images (simple shapes will be drawn for demo)
-  // We'll use colored rectangles/circles for player, enemies, bullets, rewards, hearts
-
-  // ===== Functions =====
-
-  // Utility random int in range [min, max]
+  // Utility functions
   function randInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
-  // Draw player as a green triangle pointing up
+  // Drawing functions
   function drawPlayer() {
     ctx.fillStyle = '#0f7';
     ctx.beginPath();
@@ -255,280 +247,4 @@
     ctx.lineTo(player.x - player.width / 2, player.y + player.height / 2);
     ctx.lineTo(player.x + player.width / 2, player.y + player.height / 2);
     ctx.closePath();
-    ctx.fill();
-  }
-
-  // Draw bullet as small yellow rectangle
-  function drawBullet(bullet) {
-    ctx.fillStyle = '#ff0';
-    ctx.fillRect(bullet.x - 3, bullet.y - 10, 6, 12);
-  }
-
-  // Draw enemy as red circle
-  function drawEnemy(enemy) {
-    ctx.fillStyle = '#f00';
-    ctx.beginPath();
-    ctx.arc(enemy.x, enemy.y, enemy.radius, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  // Draw reward as blue star (simple 5-point star)
-  function drawReward(reward) {
-    const cx = reward.x, cy = reward.y, spikes = 5;
-    const outerRadius = 12;
-    const innerRadius = 6;
-    let rot = Math.PI / 2 * 3;
-    let x = cx;
-    let y = cy;
-    const step = Math.PI / spikes;
-
-    ctx.fillStyle = '#08f';
-    ctx.beginPath();
-    ctx.moveTo(cx, cy - outerRadius);
-    for(let i = 0; i < spikes; i++){
-      x = cx + Math.cos(rot) * outerRadius;
-      y = cy + Math.sin(rot) * outerRadius;
-      ctx.lineTo(x, y);
-      rot += step;
-
-      x = cx + Math.cos(rot) * innerRadius;
-      y = cy + Math.sin(rot) * innerRadius;
-      ctx.lineTo(x, y);
-      rot += step;
-    }
-    ctx.lineTo(cx, cy - outerRadius);
-    ctx.closePath();
-    ctx.fill();
-  }
-
-  // Draw hearts for lives
-  function updateHeartsDisplay() {
-    heartsContainer.innerHTML = '';
-    for(let i = 0; i < player.lives; i++) {
-      const heartDiv = document.createElement('div');
-      heartDiv.classList.add('heart');
-      heartsContainer.appendChild(heartDiv);
-    }
-  }
-
-  // Reset game state
-  function resetGame() {
-    player.lives = 3;
-    player.x = width / 2;
-    player.y = height - 70;
-    player.bullets = [];
-    enemies = [];
-    rewards = [];
-    score = 0;
-    nextAppreciationIndex = 0;
-    appreciationText.textContent = '';
-    gameOver = false;
-    updateHeartsDisplay();
-    updateScoreboard();
-  }
-
-  // Spawn enemies according to difficulty
-  function spawnEnemies() {
-    enemies = [];
-    for(let i = 0; i < currentDifficultySettings.enemyCount; i++) {
-      enemies.push({
-        x: randInt(40, width - 40),
-        y: randInt(-600, -50),
-        radius: 25,
-        speed: currentDifficultySettings.enemySpeed + Math.random(),
-        direction: 1,  // 1 down
-      });
-    }
-  }
-
-  // Spawn a reward at a random position above screen
-  function spawnReward() {
-    rewards.push({
-      x: randInt(30, width - 30),
-      y: -20,
-      speed: 1.2,
-      collected: false,
-    });
-  }
-
-  // Draw everything
-  function draw() {
-    ctx.clearRect(0, 0, width, height);
-
-    // Player
-    drawPlayer();
-
-    // Bullets
-    player.bullets.forEach(drawBullet);
-
-    // Enemies
-    enemies.forEach(drawEnemy);
-
-    // Rewards
-    rewards.forEach(drawReward);
-  }
-
-  // Update positions and logic
-  function update(deltaTime) {
-    if(gameOver) return;
-
-    // Move bullets up
-    player.bullets.forEach((b, idx) => {
-      b.y -= b.speed;
-      if(b.y < -10) {
-        player.bullets.splice(idx, 1);
-      }
-    });
-
-    // Move enemies down and side to side (simple sway)
-    enemies.forEach(enemy => {
-      enemy.y += enemy.speed;
-      enemy.x += Math.sin(Date.now() / 500 + enemy.x) * 0.5;
-
-      // Reset enemy if goes out bottom
-      if(enemy.y - enemy.radius > height) {
-        enemy.x = randInt(40, width - 40);
-        enemy.y = randInt(-600, -50);
-        enemy.speed = currentDifficultySettings.enemySpeed + Math.random();
-      }
-    });
-
-    // Move rewards down
-    rewards.forEach((reward, idx) => {
-      reward.y += reward.speed;
-      if(reward.y > height + 20) {
-        rewards.splice(idx, 1);
-      }
-    });
-
-    // Collision detection bullets <-> enemies
-    player.bullets.forEach((bullet, bIdx) => {
-      enemies.forEach((enemy, eIdx) => {
-        const dx = bullet.x - enemy.x;
-        const dy = bullet.y - enemy.y;
-        const dist = Math.sqrt(dx*dx + dy*dy);
-        if(dist < enemy.radius + 6) {
-          // Enemy hit
-          enemies.splice(eIdx, 1);
-          player.bullets.splice(bIdx, 1);
-          score += 2;
-          updateScoreboard();
-          playSound('hitSound');
-          // Spawn a new enemy
-          enemies.push({
-            x: randInt(40, width - 40),
-            y: randInt(-600, -50),
-            radius: 25,
-            speed: currentDifficultySettings.enemySpeed + Math.random(),
-            direction: 1,
-          });
-        }
-      });
-    });
-
-    // Collision detection enemies <-> player (simple radius)
-    enemies.forEach((enemy, eIdx) => {
-      const dx = player.x - enemy.x;
-      const dy = player.y - enemy.y;
-      const dist = Math.sqrt(dx*dx + dy*dy);
-      if(dist < enemy.radius + player.width / 2) {
-        enemies.splice(eIdx, 1);
-        player.lives--;
-        updateHeartsDisplay();
-        playSound('hitSound');
-        if(player.lives <= 0) {
-          endGame();
-        }
-      }
-    });
-
-    // Collision detection rewards <-> player
-    rewards.forEach((reward, rIdx) => {
-      const dx = player.x - reward.x;
-      const dy = player.y - reward.y;
-      const dist = Math.sqrt(dx*dx + dy*dy);
-      if(dist < 20 + player.width / 2) {
-        rewards.splice(rIdx, 1);
-        score += 5;
-        updateScoreboard();
-        playSound('hitSound');
-      }
-    });
-
-    // Appreciation text update
-    if(nextAppreciationIndex < appreciationMilestones.length && score >= appreciationMilestones[nextAppreciationIndex].score) {
-      appreciationText.textContent = appreciationMilestones[nextAppreciationIndex].text;
-      // Show for 3 seconds then fade out
-      setTimeout(() => {
-        appreciationText.textContent = '';
-      }, 3000);
-      nextAppreciationIndex++;
-    }
-  }
-
-  // Draw loop
-  let lastTime = 0;
-  function gameLoop(timestamp) {
-    if(!lastTime) lastTime = timestamp;
-    const deltaTime = timestamp - lastTime;
-    lastTime = timestamp;
-
-    if(gameStarted && !gameOver) {
-      update(deltaTime);
-      draw();
-    }
-
-    requestAnimationFrame(gameLoop);
-  }
-
-  // Update scoreboard text
-  function updateScoreboard() {
-    scoreboard.textContent = `${playerName} - Score: ${score}`;
-  }
-
-  // Play a sound by name
-  function playSound(name) {
-    const sound = sounds[name];
-    if(sound) {
-      // Clone to allow overlap
-      const sndClone = sound.cloneNode();
-      sndClone.volume = sound.volume;
-      sndClone.play();
-    }
-  }
-
-  // Player shooting bullets
-  function shoot() {
-    if(!gameStarted || gameOver) return;
-    const now = Date.now();
-    if(now - player.lastShootTime < player.shootCooldown) return;
-
-    player.bullets.push({
-      x: player.x,
-      y: player.y - player.height / 2,
-      speed: 10,
-    });
-    player.lastShootTime = now;
-    playSound('fireSound');
-  }
-
-  // Handle keyboard input for player movement and shooting
-  const keys = {};
-  window.addEventListener('keydown', (e) => {
-    keys[e.code] = true;
-    if(e.code === 'Space') {
-      shoot();
-    }
-  });
-  window.addEventListener('keyup', (e) => {
-    keys[e.code] = false;
-  });
-
-  // Drag controls for player on canvas
-  let dragging = false;
-  let dragOffsetX = 0;
-
-  canvas.addEventListener('mousedown', (e) => {
-    const rect = canvas.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const mouseY
+    ctx
