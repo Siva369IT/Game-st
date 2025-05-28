@@ -1,265 +1,384 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Army Shooter Game</title>
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      font-family: sans-serif;
-      background: #000;
-    }
-    canvas {
-      display: block;
-      background: linear-gradient(to bottom, #111, #444);
-    }
-    #score {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      color: #fff;
-      font-size: 24px;
-    }
-    #gameOver {
-      display: none;
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      text-align: center;
-      color: white;
-    }
-    #gameOver h1 {
-      font-size: 40px;
-    }
-    #restartBtn {
-      padding: 10px 20px;
-      font-size: 20px;
-      background-color: #28a745;
-      color: white;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-    }
-    #touchArea {
-      position: absolute;
-      bottom: 0;
-      width: 100%;
-      height: 80px;
-      background: rgba(255, 255, 255, 0.1);
-    }
-    #playerNameInput {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      text-align: center;
-      color: white;
-    }
-    #playerNameInput input {
-      font-size: 20px;
-      padding: 10px;
-      border-radius: 5px;
-    }
-    #playerNameInput button {
-      font-size: 20px;
-      padding: 10px 20px;
-      margin-top: 10px;
-      border: none;
-      border-radius: 5px;
-      background: green;
-      color: white;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Shooting Game</title>
+<style>
+  body, html {
+    margin: 0; padding: 0; overflow: hidden;
+    background: #111;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    color: #fff;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+  }
+  #gameContainer {
+    position: relative;
+    width: 100vw;
+    height: 90vh;
+    background: linear-gradient(180deg, #222 0%, #000 100%);
+    overflow: hidden;
+  }
+  #uiContainer {
+    position: relative;
+    height: 10vh;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background: #222;
+  }
+  #score {
+    font-size: 1.4rem;
+    font-weight: bold;
+    padding-left: 10px;
+  }
+  #lives {
+    display: flex;
+    gap: 5px;
+  }
+  .heart {
+    width: 24px;
+    height: 24px;
+    background: url('https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Heart_icon_red.svg/1024px-Heart_icon_red.svg.png') no-repeat center center / contain;
+  }
+  #appreciation {
+    position: absolute;
+    top: 40%;
+    width: 100%;
+    text-align: center;
+    font-size: 2.5rem;
+    color: #0f0;
+    font-weight: bold;
+    display: none;
+  }
+  #gameOverScreen {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.85);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.8rem;
+    display: none;
+    z-index: 1000;
+  }
+  #restartBtn {
+    margin-top: 20px;
+    padding: 10px 20px;
+    font-size: 1.3rem;
+    cursor: pointer;
+    background: #0a0;
+    border: none;
+    border-radius: 6px;
+    color: white;
+  }
+  #player {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 80px;
+    background: url('https://i.imgur.com/6TSr0Pe.png') no-repeat center center / contain;
+    z-index: 10;
+    touch-action: none;
+  }
+  #cap {
+    position: absolute;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50px;
+    height: 30px;
+    background: url('https://i.imgur.com/zmFTD5G.png') no-repeat center center / contain;
+    pointer-events: none;
+    z-index: 11;
+  }
+  .bullet {
+    position: absolute;
+    width: 10px;
+    height: 4px;
+    background: #ff0;
+    border-radius: 2px;
+    z-index: 20;
+  }
+  .enemy {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    font-size: 40px;
+    text-align: center;
+    line-height: 50px;
+    user-select: none;
+  }
+  .reward {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    font-size: 40px;
+    text-align: center;
+    line-height: 40px;
+    user-select: none;
+  }
+  #dragArea {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100vw;
+    height: 80px;
+    background: rgba(255,255,255,0.1);
+    touch-action: none;
+    z-index: 20;
+  }
+  #startScreen {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: #111;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    font-size: 1.2rem;
+    z-index: 10000;
+  }
+  #startScreen input, #startScreen button {
+    padding: 8px 12px;
+    font-size: 1.1rem;
+  }
+  #difficultyButtons button {
+    margin: 0 10px;
+    padding: 10px 20px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    background: #333;
+    border: none;
+    color: white;
+    border-radius: 6px;
+    transition: background 0.3s;
+  }
+  #difficultyButtons button:hover {
+    background: #0a0;
+  }
+  #startGameBtn {
+    margin-top: 20px;
+    padding: 10px 30px;
+    font-size: 1.3rem;
+    cursor: pointer;
+    background: #0a0;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    display: none;
+  }
+  #scoreLivesContainer {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    display: flex;
+    justify-content: space-between;
+    font-weight: bold;
+    font-size: 1.2rem;
+    z-index: 100;
+    user-select: none;
+  }
+</style>
 </head>
 <body>
-  <div id="playerNameInput">
-    <h1>Enter Your Name</h1>
-    <input type="text" id="playerName" placeholder="Your name here" />
-    <br/>
-    <button onclick="startGame()">Start Game</button>
+<div id="startScreen">
+  <div>
+    <label for="playerName">Enter your name:</label><br/>
+    <input id="playerName" type="text" placeholder="Player name" />
   </div>
-  <div id="score"></div>
-  <div id="gameOver">
-    <h1 id="gameOverMsg"></h1>
-    <button id="restartBtn" onclick="location.reload()">Restart</button>
+  <div id="difficultyButtons" style="display:none;">
+    <button data-level="easy">Easy</button>
+    <button data-level="medium">Medium</button>
+    <button data-level="hard">Hard</button>
   </div>
-  <canvas id="gameCanvas"></canvas>
-  <div id="touchArea"></div>  <script>
-    let canvas = document.getElementById("gameCanvas");
-    let ctx = canvas.getContext("2d");
-    let width = window.innerWidth;
-    let height = window.innerHeight;
-    canvas.width = width;
-    canvas.height = height;
+  <button id="startGameBtn">Start Game</button>
+</div>
 
-    let player = {
-      x: width / 2 - 25,
-      y: height - 100,
-      width: 50,
-      height: 50,
-      color: "#0f0",
-    };
+<div id="scoreLivesContainer" style="display:none;">
+  <div id="score">Score: 0</div>
+  <div id="lives"></div>
+</div>
 
-    let bullets = [];
-    let enemies = [];
-    let rewards = [];
-    let score = 0;
-    let gameRunning = true;
-    let fireRate = 100;
-    let lastFireTime = 0;
-    let playerName = "";
+<div id="gameContainer" style="display:none;">
+  <div id="player"></div>
+  <div id="cap"></div>
+  <div id="dragArea"></div>
+  <div id="appreciation"></div>
+  <div id="gameOverScreen">
+    <div id="gameOverText">Game Over! Score: 0</div>
+    <button id="restartBtn">Restart</button>
+  </div>
+</div>
 
-    document.getElementById("score").innerText = "Score: 0";
+<audio id="bgMusic" loop volume="0.15" preload="auto" src="https://cdn.pixabay.com/download/audio/2022/03/29/audio_31cde2b03e.mp3?filename=epic-military-march-11255.mp3"></audio>
+<audio id="fireSound" volume="0.03" preload="auto" src="https://freesound.org/data/previews/522/522702_5121236-lq.mp3"></audio>
+<audio id="hitSound" volume="0.4" preload="auto" src="https://freesound.org/data/previews/256/256113_4486188-lq.mp3"></audio>
 
-    function startGame() {
-      playerName = document.getElementById("playerName").value || "Player";
-      document.getElementById("playerNameInput").style.display = "none";
-      fireBullets();
-      animate();
-      spawnEnemies();
+<script>
+  const gameContainer = document.getElementById('gameContainer');
+  const player = document.getElementById('player');
+  const cap = document.getElementById('cap');
+  const dragArea = document.getElementById('dragArea');
+  const scoreEl = document.getElementById('score');
+  const livesEl = document.getElementById('lives');
+  const appreciationEl = document.getElementById('appreciation');
+  const gameOverScreen = document.getElementById('gameOverScreen');
+  const gameOverText = document.getElementById('gameOverText');
+  const restartBtn = document.getElementById('restartBtn');
+  const startScreen = document.getElementById('startScreen');
+  const difficultyButtons = document.getElementById('difficultyButtons');
+  const startGameBtn = document.getElementById('startGameBtn');
+  const playerNameInput = document.getElementById('playerName');
+  const scoreLivesContainer = document.getElementById('scoreLivesContainer');
+
+  let score = 0;
+  let lives = 3;
+  let difficulty = null;
+  let playerName = '';
+  let enemies = [];
+  let bullets = [];
+  let rewards = [];
+  let enemyInterval, rewardInterval;
+  let bgMusic = document.getElementById('bgMusic');
+  let fireSound = document.getElementById('fireSound');
+  let hitSound = document.getElementById('hitSound');
+
+  function createHeart() {
+    const heart = document.createElement('div');
+    heart.classList.add('heart');
+    return heart;
+  }
+
+  function updateLives() {
+    livesEl.innerHTML = '';
+    for(let i=0; i<lives; i++) {
+      livesEl.appendChild(createHeart());
     }
+  }
 
-    function drawPlayer() {
-      ctx.fillStyle = player.color;
-      ctx.fillRect(player.x, player.y, player.width, player.height);
-    }
+  function setScore(val) {
+    score = val;
+    scoreEl.textContent = `Score: ${score}`;
+  }
 
-    function drawBullets() {
-      ctx.fillStyle = "yellow";
-      bullets.forEach((b, i) => {
-        b.y -= b.speed;
-        ctx.fillRect(b.x, b.y, 5, 10);
-        if (b.y < 0) bullets.splice(i, 1);
-      });
-    }
+  function showAppreciation(text) {
+    appreciationEl.textContent = text;
+    appreciationEl.style.display = 'block';
+    setTimeout(() => { appreciationEl.style.display = 'none'; }, 2500);
+  }
 
-    function drawEnemies() {
-      enemies.forEach((e, i) => {
-        e.y += e.speed;
-        ctx.fillStyle = e.color;
-        ctx.fillRect(e.x, e.y, e.size, e.size);
-        if (e.y > height) enemies.splice(i, 1);
+  function createEnemy() {
+    const enemy = document.createElement('div');
+    enemy.classList.add('enemy');
+    enemy.style.left = Math.random() * (gameContainer.clientWidth - 50) + 'px';
+    enemy.style.top = '-60px';
+    enemy.textContent = '🎯';
+    enemy.speed = 1 + Math.random() * (difficulty === 'easy' ? 1 : difficulty === 'medium' ? 2 : 3);
+    gameContainer.appendChild(enemy);
+    enemies.push(enemy);
+  }
 
-        // Collision
-        if (
-          e.x < player.x + player.width &&
-          e.x + e.size > player.x &&
-          e.y < player.y + player.height &&
-          e.y + e.size > player.y
-        ) {
-          gameOver();
-        }
-      });
-    }
+  function createReward() {
+    const reward = document.createElement('div');
+    reward.classList.add('reward');
+    reward.style.left = Math.random() * (gameContainer.clientWidth - 40) + 'px';
+    reward.style.top = '-50px';
+    reward.textContent = '💚';
+    reward.speed = 1.5 + Math.random();
+    gameContainer.appendChild(reward);
+    rewards.push(reward);
+  }
 
-    function drawRewards() {
-      rewards.forEach((r, i) => {
-        r.y += r.speed;
-        ctx.fillStyle = "#0cf";
-        ctx.beginPath();
-        ctx.arc(r.x, r.y, 15, 0, 2 * Math.PI);
-        ctx.fill();
+  function fireBullet() {
+    const bullet = document.createElement('div');
+    bullet.classList.add('bullet');
+    const playerRect = player.getBoundingClientRect();
+    bullet.style.left = (playerRect.left + playerRect.width / 2 - 5) + 'px';
+    bullet.style.top = (playerRect.top - 4) + 'px';
+    bullet.speed = 7;
+    gameContainer.appendChild(bullet);
+    bullets.push(bullet);
+    fireSound.currentTime = 0;
+    fireSound.play();
+  }
 
-        // Collect reward
-        if (
-          r.x < player.x + player.width &&
-          r.x + 15 > player.x &&
-          r.y < player.y + player.height &&
-          r.y + 15 > player.y
-        ) {
-          fireRate = 50;
-          setTimeout(() => fireRate = 100, 5000);
-          rewards.splice(i, 1);
-        }
-      });
-    }
-
-    function fireBullets() {
-      if (!gameRunning) return;
-      let now = Date.now();
-      if (now - lastFireTime > fireRate) {
-        bullets.push({
-          x: player.x + player.width / 2 - 2.5,
-          y: player.y,
-          speed: 15,
-        });
-        lastFireTime = now;
+  function moveObjects() {
+    // Move bullets up
+    bullets.forEach((bullet, i) => {
+      let top = parseFloat(bullet.style.top);
+      top -= bullet.speed;
+      if(top < -10) {
+        bullet.remove();
+        bullets.splice(i, 1);
+      } else {
+        bullet.style.top = top + 'px';
       }
-      requestAnimationFrame(fireBullets);
-    }
+    });
 
-    function animate() {
-      if (!gameRunning) return;
-      ctx.clearRect(0, 0, width, height);
-      drawPlayer();
-      drawBullets();
-      drawEnemies();
-      drawRewards();
-      detectHits();
-      requestAnimationFrame(animate);
-    }
-
-    function detectHits() {
-      enemies.forEach((e, ei) => {
-        bullets.forEach((b, bi) => {
-          if (
-            b.x < e.x + e.size &&
-            b.x + 5 > e.x &&
-            b.y < e.y + e.size &&
-            b.y + 10 > e.y
-          ) {
-            bullets.splice(bi, 1);
-            enemies.splice(ei, 1);
-            score += 10;
-            document.getElementById("score").innerText = "Score: " + score;
-          }
-        });
-      });
-    }
-
-    function spawnEnemies() {
-      setInterval(() => {
-        if (!gameRunning) return;
-        let size = 40;
-        enemies.push({
-          x: Math.random() * (width - size),
-          y: -size,
-          size: size,
-          speed: 2 + Math.random() * 2,
-          color: ["#000", "#0f0", "#f00", "#fff"][Math.floor(Math.random() * 4)]
-        });
-
-        // Occasionally spawn rewards
-        if (Math.random() < 0.1) {
-          rewards.push({
-            x: Math.random() * (width - 30),
-            y: -30,
-            speed: 3
-          });
+    // Move enemies down
+    enemies.forEach((enemy, i) => {
+      let top = parseFloat(enemy.style.top);
+      top += enemy.speed;
+      if(top > gameContainer.clientHeight) {
+        enemy.remove();
+        enemies.splice(i, 1);
+        lives--;
+        updateLives();
+        if(lives <= 0) {
+          endGame();
         }
-      }, 500);
-    }
+      } else {
+        enemy.style.top = top + 'px';
+      }
+    });
 
-    function gameOver() {
-      gameRunning = false;
-      document.getElementById("gameOver").style.display = "block";
-      let msg = `Game Over! Your Score: ${score}`;
-      if (score >= 100) msg += `<br/>Well done, ${playerName}!`;
-      document.getElementById("gameOverMsg").innerHTML = msg;
-    }
+    // Move rewards down
+    rewards.forEach((reward, i) => {
+      let top = parseFloat(reward.style.top);
+      top += reward.speed;
+      if(top > gameContainer.clientHeight) {
+        reward.remove();
+        rewards.splice(i, 1);
+      } else {
+        reward.style.top = top + 'px';
+      }
+    });
+  }
 
-    // Touch Controls
-    let touchArea = document.getElementById("touchArea");
-    touchArea.addEventListener("touchstart", handleTouch);
-    touchArea.addEventListener("touchmove", handleTouch);
+  function checkCollisions() {
+    bullets.forEach((bullet, bIndex) => {
+      const bulletRect = bullet.getBoundingClientRect();
 
-    function handleTouch(e) {
-      e.preventDefault();
-      let touch = e.touches[0];
-      player.x = touch.clientX - player.width / 2;
-    }
-  </script></body>
-</html>
+      enemies.forEach((enemy, eIndex) => {
+        const enemyRect = enemy.getBoundingClientRect();
+        if(!(bulletRect.right < enemyRect.left || 
+             bulletRect.left > enemyRect.right || 
+             bulletRect.bottom < enemyRect.top || 
+             bulletRect.top > enemyRect.bottom)) {
+          // Collision bullet & enemy
+          enemy.remove();
+          enemies.splice(eIndex,1);
+          bullet.remove();
+          bullets.splice(bIndex,1);
+          hitSound.currentTime = 0;
+          hitSound.play();
+          setScore(score + 10);
+          showAppreciation("+10");
+        }
+      });
+
+      rewards.forEach((reward, rIndex) => {
+        const rewardRect = reward.getBoundingClientRect();
+        if(!(bulletRect.right < rewardRect.left || 
+             bulletRect.left > rewardRect.right || 
+             bulletRect.bottom < rewardRect
