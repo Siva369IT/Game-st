@@ -6,158 +6,211 @@
   <style>
     body {
       margin: 0;
-      padding: 0;
-      background: #111;
       overflow: hidden;
-      font-family: sans-serif;
-    }
-    canvas {
-      display: block;
-      margin: 0 auto;
-      background: #222;
-    }
-    #startScreen, #fireBtn, #scoreBoard {
-      position: absolute;
-      z-index: 10;
+      background: #111;
+      font-family: Arial, sans-serif;
       color: white;
-      text-align: center;
     }
-    #startScreen {
-      top: 10px;
-      left: 50%;
-      transform: translateX(-50%);
+    #gameCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
     }
-    #fireBtn {
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: red;
-      padding: 10px 20px;
-      border-radius: 10px;
-      font-size: 20px;
-      cursor: pointer;
+    .overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      z-index: 100;
     }
-    #scoreBoard {
+    .hidden {
+      display: none;
+    }
+    .touch-controls {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      height: 80px;
+      display: flex;
+      z-index: 50;
+    }
+    .touch-area {
+      flex: 1;
+    }
+    .score {
+      position: absolute;
       top: 10px;
       left: 10px;
-      font-size: 18px;
-    }
-    .blood {
-      position: absolute;
-      width: 20px;
-      height: 20px;
-      background: red;
-      border-radius: 50%;
-      animation: splash 0.5s ease-out forwards;
-    }
-    @keyframes splash {
-      from { transform: scale(0); opacity: 1; }
-      to { transform: scale(2); opacity: 0; }
+      font-size: 20px;
+      z-index: 10;
     }
   </style>
 </head>
 <body>
-  <div id="startScreen">
-    <input type="text" id="playerName" placeholder="Enter your name" />
+  <canvas id="gameCanvas"></canvas>  <div class="overlay" id="startScreen">
+    <h2>Enter Your Name</h2>
+    <input type="text" id="playerName" />
     <button onclick="startGame()">Start Game</button>
-  </div>
-  <div id="scoreBoard">Score: 0</div>
-  <canvas id="gameCanvas" width="480" height="640"></canvas>
-  <div id="fireBtn" onclick="fireBullet()">FIRE</div>  <script>
+  </div>  <div class="overlay hidden" id="gameOverScreen">
+    <h2 id="gameOverText">Game Over</h2>
+    <p id="finalScore"></p>
+    <button onclick="location.reload()">Restart</button>
+  </div>  <div class="score" id="scoreDisplay">Score: 0</div>  <div class="touch-controls">
+    <div class="touch-area" ontouchstart="moveLeft()" ontouchend="stopMove()"></div>
+    <div class="touch-area" ontouchstart="moveRight()" ontouchend="stopMove()"></div>
+  </div>  <!-- Audio --><audio id="fireSound" src="https://actions.google.com/sounds/v1/ambiences/battlefield_gunfire_loop.ogg"></audio> <audio id="hitSound" src="https://actions.google.com/sounds/v1/impacts/crash.ogg"></audio> <audio id="rewardSound" src="https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg"></audio> <audio id="gameOverSound" src="https://actions.google.com/sounds/v1/cartoon/cartoon_cowbell.ogg"></audio>
+
+  <script>
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
-    let player = { x: canvas.width / 2, name: "", gunOffset: 20 };
-    let bullets = [], enemies = [], gameRunning = false, score = 0;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    let playerName = "";
+    let player = { x: canvas.width / 2, y: canvas.height - 80, width: 40, height: 60, speed: 7 };
+    let bullets = [], enemies = [], rewards = [];
+    let leftPressed = false, rightPressed = false;
+    let score = 0;
+    let doubleFire = false;
+    let fireInterval;
+
     const colors = ["black", "green", "red", "white"];
 
     function startGame() {
-      player.name = document.getElementById("playerName").value || "Soldier";
-      document.getElementById("startScreen").style.display = "none";
-      gameRunning = true;
-      requestAnimationFrame(update);
+      playerName = document.getElementById("playerName").value || "Player";
+      document.getElementById("startScreen").classList.add("hidden");
+      fireInterval = setInterval(() => fireBullet(), 300);
+      spawnEnemies();
+      gameLoop();
+    }
+
+    function fireBullet() {
+      bullets.push({ x: player.x + player.width / 2 - 5, y: player.y, width: 5, height: 10 });
+      if (doubleFire) {
+        bullets.push({ x: player.x + player.width / 2 + 5, y: player.y, width: 5, height: 10 });
+      }
+      document.getElementById("fireSound").play();
+    }
+
+    function spawnEnemies() {
       setInterval(() => {
-        enemies.push({
-          x: Math.random() * (canvas.width - 30) + 15,
-          y: -20,
-          color: colors[Math.floor(Math.random() * colors.length)],
-          speed: Math.random() * 2 + 1
-        });
+        const x = Math.random() * (canvas.width - 30);
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        enemies.push({ x, y: -30, width: 30, height: 30, color });
+        if (Math.random() < 0.1) {
+          rewards.push({ x, y: -30, width: 20, height: 20 });
+        }
       }, 1000);
     }
 
-    function drawPlayer() {
-      ctx.fillStyle = "#0f0";
-      ctx.fillRect(player.x - 15, canvas.height - 60, 30, 40);
-      ctx.fillStyle = "#654321";
-      ctx.fillRect(player.x - 5, canvas.height - 70, 10, 30);
-      ctx.fillStyle = "#fff";
-      ctx.fillText(player.name, player.x - 20, canvas.height - 75);
-      ctx.fillStyle = "#555";
-      ctx.fillRect(player.x - 10, canvas.height - 65, 20, 5);
+    function moveLeft() {
+      leftPressed = true;
     }
 
-    function drawBullets() {
-      ctx.fillStyle = "yellow";
-      bullets.forEach((b) => ctx.fillRect(b.x, b.y, 4, 10));
+    function moveRight() {
+      rightPressed = true;
     }
 
-    function drawEnemies() {
-      enemies.forEach((e) => {
-        ctx.fillStyle = e.color;
-        ctx.beginPath();
-        ctx.arc(e.x, e.y, 15, 0, Math.PI * 2);
-        ctx.fill();
-      });
+    function stopMove() {
+      leftPressed = rightPressed = false;
     }
 
-    function update() {
-      if (!gameRunning) return;
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft") leftPressed = true;
+      if (e.key === "ArrowRight") rightPressed = true;
+    });
+    document.addEventListener("keyup", (e) => {
+      if (e.key === "ArrowLeft") leftPressed = false;
+      if (e.key === "ArrowRight") rightPressed = false;
+    });
+
+    function gameLoop() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      drawPlayer();
-      bullets.forEach((b) => (b.y -= 5));
-      bullets = bullets.filter((b) => b.y > 0);
-      enemies.forEach((e) => (e.y += e.speed));
 
-      bullets.forEach((b, bi) => {
-        enemies.forEach((e, ei) => {
-          const dist = Math.hypot(b.x - e.x, b.y - e.y);
-          if (dist < 15) {
-            enemies.splice(ei, 1);
-            bullets.splice(bi, 1);
-            createBlood(e.x, e.y);
-            score++;
-            document.getElementById("scoreBoard").innerText = `Score: ${score}`;
+      // Move player
+      if (leftPressed) player.x -= player.speed;
+      if (rightPressed) player.x += player.speed;
+      player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+
+      // Draw player
+      ctx.fillStyle = "#0f0";
+      ctx.fillRect(player.x, player.y, player.width, player.height);
+      ctx.fillStyle = "#663300";
+      ctx.fillRect(player.x + 10, player.y - 10, 20, 10); // army hat
+
+      // Move and draw bullets
+      bullets.forEach((b, i) => {
+        b.y -= 10;
+        ctx.fillStyle = "yellow";
+        ctx.fillRect(b.x, b.y, b.width, b.height);
+        if (b.y < 0) bullets.splice(i, 1);
+      });
+
+      // Move enemies
+      enemies.forEach((e, i) => {
+        e.y += 3;
+        ctx.fillStyle = e.color;
+        ctx.fillRect(e.x, e.y, e.width, e.height);
+
+        // Collision with player
+        if (isCollide(e, player)) {
+          gameOver();
+        }
+
+        // Bullet hit
+        bullets.forEach((b, j) => {
+          if (isCollide(e, b)) {
+            enemies.splice(i, 1);
+            bullets.splice(j, 1);
+            score += 10;
+            document.getElementById("hitSound").play();
           }
         });
       });
 
-      drawBullets();
-      drawEnemies();
-      requestAnimationFrame(update);
+      // Move rewards
+      rewards.forEach((r, i) => {
+        r.y += 2;
+        ctx.fillStyle = "blue";
+        ctx.beginPath();
+        ctx.arc(r.x, r.y, r.width / 2, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (isCollide(r, player)) {
+          rewards.splice(i, 1);
+          doubleFire = true;
+          setTimeout(() => doubleFire = false, 5000);
+          document.getElementById("rewardSound").play();
+        }
+      });
+
+      document.getElementById("scoreDisplay").innerText = `Score: ${score}`;
+      requestAnimationFrame(gameLoop);
     }
 
-    function fireBullet() {
-      bullets.push({ x: player.x, y: canvas.height - 70 });
+    function isCollide(a, b) {
+      return (
+        a.x < b.x + b.width &&
+        a.x + a.width > b.x &&
+        a.y < b.y + b.height &&
+        a.y + a.height > b.y
+      );
     }
 
-    function createBlood(x, y) {
-      const blood = document.createElement("div");
-      blood.className = "blood";
-      blood.style.left = x + "px";
-      blood.style.top = y + "px";
-      document.body.appendChild(blood);
-      setTimeout(() => blood.remove(), 500);
+    function gameOver() {
+      clearInterval(fireInterval);
+      document.getElementById("gameOverScreen").classList.remove("hidden");
+      document.getElementById("finalScore").innerText = `Score: ${score}`;
+      if (score > 100) {
+        document.getElementById("gameOverText").innerText = `Well done, ${playerName}!`;
+      }
+      document.getElementById("gameOverSound").play();
     }
-
-    canvas.addEventListener("touchmove", (e) => {
-      const rect = canvas.getBoundingClientRect();
-      player.x = e.touches[0].clientX - rect.left;
-    });
-
-    window.addEventListener("keydown", (e) => {
-      if (e.key === "ArrowLeft") player.x -= 20;
-      else if (e.key === "ArrowRight") player.x += 20;
-      else if (e.key === " ") fireBullet();
-    });
   </script></body>
 </html>
