@@ -1,4 +1,5 @@
-<!DOCTYPE html><html>
+<!DOCTYPE html>
+<html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -59,14 +60,22 @@
     <label for="playerName">Enter your name:</label>
     <input type="text" id="playerName" />
     <button onclick="startGame()">Start Game</button>
-  </div>  <div id="ui">
+  </div>
+
+  <div id="ui">
     <div id="score">Score: 0</div>
-  </div>  <div id="gameOver">
+  </div>
+
+  <div id="gameOver">
     <div id="gameOverText"></div>
     <button onclick="location.reload()">Restart</button>
-  </div>  <div id="touchControl"></div><canvas id="gameCanvas"></canvas>
+  </div>
 
-<audio id="fireSound" src="https://cdn.pixabay.com/audio/2022/03/15/audio_34ba7d3506.mp3" preload="auto"></audio> <audio id="hitSound" src="https://cdn.pixabay.com/audio/2022/03/30/audio_28745929d5.mp3" preload="auto"></audio>
+  <div id="touchControl"></div>
+  <canvas id="gameCanvas"></canvas>
+
+  <audio id="fireSound" src="https://cdn.pixabay.com/audio/2022/03/15/audio_34ba7d3506.mp3" preload="auto"></audio>
+  <audio id="hitSound" src="https://cdn.pixabay.com/audio/2022/03/30/audio_28745929d5.mp3" preload="auto"></audio>
 
   <script>
     const canvas = document.getElementById('gameCanvas');
@@ -77,7 +86,7 @@
     let playerName = '';
     let score = 0;
     let player = {
-      x: canvas.width/2,
+      x: canvas.width / 2,
       y: canvas.height - 100,
       width: 50,
       height: 50,
@@ -124,8 +133,16 @@
         ctx.fillText(enemy.symbol, enemy.x, enemy.y);
         enemy.y += enemy.speed;
 
-        // Collision with player
-        if (!isGameOver && enemy.y + 30 > player.y && enemy.x > player.x && enemy.x < player.x + player.width) {
+        // Game over only when enemy bottom touches top of player
+        const enemyBottom = enemy.y + 30;
+        const enemyRight = enemy.x + 30;
+        const playerTop = player.y;
+        const playerRight = player.x + player.width;
+
+        if (!isGameOver &&
+            enemyBottom >= playerTop &&
+            enemy.x <= playerRight &&
+            enemyRight >= player.x) {
           gameOver();
         }
       });
@@ -138,7 +155,9 @@
         reward.y += reward.speed;
         ctx.fillText('💙', reward.x, reward.y);
 
-        if (reward.y + 30 > player.y && reward.x > player.x && reward.x < player.x + player.width) {
+        if (reward.y + 30 > player.y &&
+            reward.x < player.x + player.width &&
+            reward.x + 30 > player.x) {
           doubleFire = true;
           setTimeout(() => doubleFire = false, 5000);
         }
@@ -192,7 +211,9 @@
     function gameOver() {
       isGameOver = true;
       document.getElementById('gameOver').style.display = 'block';
-      const msg = score > 100 ? `Well done, ${playerName}! You scored ${score}` : `${playerName}, your score is ${score}`;
+      const msg = score > 100
+        ? `Well done, ${playerName}! You scored ${score}`
+        : `${playerName}, your score is ${score}`;
       document.getElementById('gameOverText').innerText = msg;
     }
 
@@ -214,17 +235,23 @@
       requestAnimationFrame(gameLoop);
     }
 
+    // Touch control for mobile
     let isDragging = false;
-    document.getElementById('touchControl').addEventListener('touchstart', (e) => {
+    const touchControl = document.getElementById('touchControl');
+
+    touchControl.addEventListener('touchstart', () => {
       isDragging = true;
     });
-    document.getElementById('touchControl').addEventListener('touchend', () => {
+
+    touchControl.addEventListener('touchend', () => {
       isDragging = false;
     });
-    document.getElementById('touchControl').addEventListener('touchmove', (e) => {
+
+    touchControl.addEventListener('touchmove', (e) => {
       if (isDragging && e.touches.length > 0) {
         player.x = e.touches[0].clientX - player.width / 2;
       }
     });
-  </script></body>
+  </script>
+</body>
 </html>
